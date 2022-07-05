@@ -104,3 +104,9 @@ objs
 !.vscode/tasks.json
 !.vscode/launch.json
 !.vscode/extensions.json
+
+# exclude project files
+**.sln
+**.vcxproj
+**.vcxproj.user
+**.vcxproj.filters

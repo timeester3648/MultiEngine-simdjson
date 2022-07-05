@@ -9,7 +9,7 @@ project "simdjson"
 	inlining "Auto"
 
 	files {
-		"./**.h",
+		"./include/**.h",
 		"./src/simdjson.cpp"
 	}
 

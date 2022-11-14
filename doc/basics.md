@@ -99,7 +99,7 @@ We recommend CMake version 3.15 or better.
 
 See [our CMake demonstration](https://github.com/simdjson/cmake_demo_single_file). It works under Linux, FreeBSD, macOS and Windows (including Visual Studio).
 
-The CMake build in simdjson can be taylored with a few variables. You can see the available variables and their default values by entering the `cmake -LA` command.
+The CMake build in simdjson can be tailored with a few variables. You can see the available variables and their default values by entering the `cmake -LA` command.
 
 
 Versions
@@ -454,7 +454,7 @@ support for users who avoid exceptions. See [the simdjson error handling documen
   size_t count = test_array.count_elements(); // requires simdjson 1.0 or better
   std::cout << "Number of elements: " <<  count << std::endl;
   for(ondemand::object elem: test_array) {
-     std::cout << simdjson::to_string(elem);
+     std::cout << simdjson::to_json_string(elem);
   }
   ```
 * **Counting fields in objects:** Other times, it is useful to scan an object to determine the number of fields prior to
@@ -482,8 +482,20 @@ support for users who avoid exceptions. See [the simdjson error handling documen
   std::cout << "Number of fields: " <<  count << std::endl; // Prints "Number of fields: 2"
   ```
 * **Tree Walking and JSON Element Types:** Sometimes you don't necessarily have a document
-  with a known type, and are trying to generically inspect or walk over JSON elements. To do that, you can use iterators and the `type()` method. You can also represent arbitrary JSON values with
-  `ondemand::value` instances: it can represent anything except a scalar document (lone number, string, null or Boolean). You can check for scalar documents with the method `scalar()`. You may also access [raw strings](#raw-strings).
+  with a known type, and are trying to generically inspect or walk over JSON elements.
+  You can also represent arbitrary JSON values with
+  `ondemand::value` instances: it can represent anything except a scalar document (lone number, string, null or Boolean). You can check for scalar documents with the method `scalar()`.
+  You can query the type of a document or a value with the `type()` method.
+  The `type()` method does not consume or validate documents and values, but it tells you whether they are
+  - arrays (`json_type::array`),
+  - objects (`json_type::object`)
+  - numbers (`json_type::number`),
+  - strings (`json_type::string`),
+  - Booleans (`json_type::boolean`),
+  - null (`json_type::null`).
+
+  You must still validate and consume the values (e.g., call `is_null()`) after calling `type()`.
+   You may also access [raw strings](#raw-strings).
   For example, the following is a quick and dirty recursive function that verbosely prints the JSON document as JSON. This example also illustrates lifecycle requirements: the `document` instance holds the iterator. The document must remain in scope while you are accessing instances of `value`, `object` and `array`.
   ```c++
   void recursive_print_json(ondemand::value element) {
@@ -532,7 +544,11 @@ support for users who avoid exceptions. See [the simdjson error handling documen
       cout << element.get_bool();
       break;
     case ondemand::json_type::null:
-      cout << "null";
+      // We check that the value is indeed null
+      // otherwise: an error is thrown.
+      if(element.is_null()) {
+        cout << "null";
+      }
       break;
     }
   }
@@ -931,11 +947,11 @@ bool parse() {
   // Iterating through an array of objects
   auto error = parser.iterate(cars_json).get(doc);
   if(error) { std::cerr << error << std::endl; return false; }
-  ondemand::array cars;
+  ondemand::array cars; // invalid until the get() succeeds
   error = doc.get_array().get(cars);
 
   for (auto car_value : cars) {
-    ondemand::object car;
+    ondemand::object car; // invalid until the get() succeeds
     error = car_value.get_object().get(car);
     if(error) { std::cerr << error << std::endl; return false; }
 
@@ -972,6 +988,19 @@ bool parse() {
 }
 ```
 
+For safety, you should only use our ondemand instances (e.g., `ondemand::object`)
+after you have initialized them and checked that there is no error:
+
+```c++
+    ondemand::object car; // invalid until the get() succeeds
+    // the `car` instance should not use used before it is initialized
+    error = car_value.get_object().get(car);
+    if(error) {
+      // the `car` instance should not use used
+    } else {
+      // the `car` instance can be safely used
+    }
+```
 
 The following examples illustrates how to iterate through the content of an object without
 having to handle exceptions.
@@ -981,7 +1010,7 @@ having to handle exceptions.
   ondemand::document doc;
   auto error = parser.iterate(json).get(doc);
   if(error) { return false; }
-  ondemand::object object;
+  ondemand::object object; // invalid until the get() succeeds
   error = doc.get_object().get(object);
   if(error) { return false; }
   for(auto field : object) {
@@ -1010,7 +1039,7 @@ target_compile_definitions(simdjson PUBLIC SIMDJSON_EXCEPTIONS=OFF)
 Users more comfortable with an exception flow may choose to directly cast the `simdjson_result<T>` to the desired type:
 
 ```c++
-simdjson::ondemande::document doc = parser.iterate(json); // Throws an exception if there was an error!
+simdjson::ondemand::document doc = parser.iterate(json); // Throws an exception if there was an error!
 ```
 
 When used this way, a `simdjson_error` exception will be thrown if an error occurs, preventing the
@@ -1097,6 +1126,9 @@ for (auto val : doc) {
 std::cout << doc.current_location() << std::endl;   // Throws OUT_OF_BOUNDS
 ```
 
+Conversely, if `doc.current_location().error() == simdjson::SUCCESS`,
+then the document has more content.
+
 Finally, the `current_location()` method may also be used even when no exceptions/errors
 are thrown. This can be helpful for users that want to know the current state of iteration during parsing. For example:
 
@@ -1105,7 +1137,7 @@ auto json = R"( [[1,2,3], -23.4, {"key": "value"}, true] )"_padded;
 ondemand::parser parser;
 auto doc = parser.iterate(json);
 for (auto val : doc) {
-  ondemand::object obj;
+  ondemand::object obj; // invalid until the get() succeeds
   auto error = val.get_object().get(obj);     // Only get objects
   if (!error) {
     std::cout << doc.current_location() << std::endl;   // Prints ""key": "value"}, true] "
@@ -1518,7 +1550,7 @@ Standard Compliance
 
 The simdjson library is fully compliant with  the [RFC 8259](https://www.tbray.org/ongoing/When/201x/2017/12/14/rfc8259.html) JSON specification.
 
-- The only insignificant whitespace characters allowed are the space, the horizontal tab, the line feed and the carriage return. In particular, a JSON document may not contain an unespaced null character.
+- The only insignificant whitespace characters allowed are the space, the horizontal tab, the line feed and the carriage return. In particular, a JSON document may not contain an unescaped null character.
 - A single string or a single number is considered to be a valid JSON document.
 - We fully validate the numbers according to the JSON specification. For example,  the string `01` is not valid JSON document since the specification states that *leading zeros are not allowed*.
 - The specification allows implementations to set limits on the range and precision of numbers accepted.  We support 64-bit floating-point numbers as well as integer values.

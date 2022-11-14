@@ -51,6 +51,7 @@ private:
   simdjson_inline void
   write_raw_string(simdjson::ondemand::raw_json_string rjs);
   inline void recursive_processor(simdjson::ondemand::value element);
+  inline void recursive_processor_ref(simdjson::ondemand::value& element);
 
   simdjson::ondemand::parser parser;
   uint8_t *buff{};
@@ -74,17 +75,34 @@ simdjson2msgpack::to_msgpack(const simdjson::padded_string &json,
       write_byte(0xc2 + doc.get_bool());
       break;
     case simdjson::ondemand::json_type::null:
-      write_byte(0xc0);
+      // We check that the value is indeed null
+      // otherwise: an error is thrown.
+      if(doc.is_null()) {
+        write_byte(0xc0);
+      }
       break;
     case simdjson::ondemand::json_type::array:
     case simdjson::ondemand::json_type::object:
     default:
       // impossible
-      break;
+      SIMDJSON_UNREACHABLE();
     }
   } else {
     simdjson::ondemand::value val = doc;
+#define SIMDJSON_GCC_COMPILER ((__GNUC__) && !(__clang__) && !(__INTEL_COMPILER))
+#if SIMDJSON_GCC_COMPILER
+    // the GCC compiler does well with by-value passing.
+    // GCC has superior recursive inlining:
+    // https://stackoverflow.com/questions/29186186/why-does-gcc-generate-a-faster-program-than-clang-in-this-recursive-fibonacci-co
+    // https://godbolt.org/z/TeK4doE51
     recursive_processor(val);
+#else
+    recursive_processor_ref(val);
+#endif
+  }
+  if (doc.current_location().error() == simdjson::SUCCESS) {
+    // Example of error detection - this won't be reached on twitter.json in the benchmark.
+    throw "There are unexpectedly tokens after the end of the json in the json2msgpack sample data";
   }
   return std::string_view(reinterpret_cast<char *>(buf), size_t(buff - buf));
 }
@@ -156,7 +174,58 @@ void simdjson2msgpack::recursive_processor(simdjson::ondemand::value element) {
     write_byte(0xc2 + element.get_bool());
     break;
   case simdjson::ondemand::json_type::null:
-    write_byte(0xc0);
+    // We check that the value is indeed null
+    // otherwise: an error is thrown.
+    if(element.is_null()) {
+      write_byte(0xc0);
+    }
+    break;
+  default:
+    SIMDJSON_UNREACHABLE();
+  }
+}
+
+
+void simdjson2msgpack::recursive_processor_ref(simdjson::ondemand::value& element) {
+  switch (element.type()) {
+  case simdjson::ondemand::json_type::array: {
+    uint32_t counter = 0;
+    write_byte(0xdd);
+    uint8_t *location = skip_uint32();
+    for (auto child : element.get_array()) {
+      counter++;
+      simdjson::ondemand::value v = child.value();
+      recursive_processor_ref(v);
+    }
+    write_uint32_at(counter, location);
+  } break;
+  case simdjson::ondemand::json_type::object: {
+    uint32_t counter = 0;
+    write_byte(0xdf);
+    uint8_t *location = skip_uint32();
+    for (auto field : element.get_object()) {
+      counter++;
+      write_raw_string(field.key());
+      simdjson::ondemand::value v = field.value();
+      recursive_processor_ref(v);
+    }
+    write_uint32_at(counter, location);
+  } break;
+  case simdjson::ondemand::json_type::number:
+    write_double(element.get_double());
+    break;
+  case simdjson::ondemand::json_type::string:
+    write_raw_string(element.get_raw_json_string());
+    break;
+  case simdjson::ondemand::json_type::boolean:
+    write_byte(0xc2 + element.get_bool());
+    break;
+  case simdjson::ondemand::json_type::null:
+    // We check that the value is indeed null
+    // otherwise: an error is thrown.
+    if(element.is_null()) {
+      write_byte(0xc0);
+    }
     break;
   default:
     SIMDJSON_UNREACHABLE();

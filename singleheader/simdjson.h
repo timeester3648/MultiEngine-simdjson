@@ -1,4 +1,4 @@
-/* auto-generated on 2023-01-21 15:29:08 -0500. Do not edit! */
+/* auto-generated on 2023-02-22 20:34:51 -0500. Do not edit! */
 /* begin file include/simdjson.h */
 #ifndef SIMDJSON_H
 #define SIMDJSON_H
@@ -43,7 +43,7 @@
 #define SIMDJSON_SIMDJSON_VERSION_H
 
 /** The version of simdjson being used (major.minor.revision) */
-#define SIMDJSON_VERSION 3.1.0
+#define SIMDJSON_VERSION "3.1.2"
 
 namespace simdjson {
 enum {
@@ -58,7 +58,7 @@ enum {
   /**
    * The revision (major.minor.REVISION) of simdjson being used.
    */
-  SIMDJSON_VERSION_REVISION = 0
+  SIMDJSON_VERSION_REVISION = 2
 };
 } // namespace simdjson
 
@@ -3180,21 +3180,11 @@ static inline uint32_t detect_supported_architectures() {
   return instruction_set::ALTIVEC;
 }
 
-#elif defined(__arm__) || defined(__aarch64__) // incl. armel, armhf, arm64
-
-#if defined(__ARM_NEON)
+#elif defined(__aarch64__) || defined(_M_ARM64)
 
 static inline uint32_t detect_supported_architectures() {
   return instruction_set::NEON;
 }
-
-#else // ARM without NEON
-
-static inline uint32_t detect_supported_architectures() {
-  return instruction_set::DEFAULT;
-}
-
-#endif
 
 #elif defined(__x86_64__) || defined(_M_AMD64) // x64
 
@@ -9697,6 +9687,9 @@ using namespace simdjson;
 using namespace simdjson::dom;
 }
 
+/**
+ * @private
+ */
 class implementation final : public simdjson::implementation {
 public:
   simdjson_inline implementation() : simdjson::implementation("arm64", "ARM NEON", internal::instruction_set::NEON) {}
@@ -12037,6 +12030,9 @@ using namespace simdjson;
 using namespace simdjson::dom;
 }
 
+/**
+ * @private
+ */
 class implementation final : public simdjson::implementation {
 public:
   simdjson_inline implementation() : simdjson::implementation(
@@ -13745,6 +13741,9 @@ namespace icelake {
 
 using namespace simdjson;
 
+/**
+ * @private
+ */
 class implementation final : public simdjson::implementation {
 public:
   simdjson_inline implementation() : simdjson::implementation(
@@ -14088,13 +14087,9 @@ namespace simd {
 
     template<int N=1>
     simdjson_inline simd8<T> prev(const simd8<T> prev_chunk) const {
-#if SIMDJSON_GCC8
      // workaround for compilers unable to figure out that 16 - N is a constant (GCC 8)
       constexpr int shift = 16 - N;
       return _mm512_alignr_epi8(*this, _mm512_permutex2var_epi64(prev_chunk, _mm512_set_epi64(13, 12, 11, 10, 9, 8, 7, 6), *this), shift);
-#else
-      return _mm512_alignr_epi8(*this, _mm512_permutex2var_epi64(prev_chunk, _mm512_set_epi64(13, 12, 11, 10, 9, 8, 7, 6), *this), 16 - N);
-#endif
     }
   };
 
@@ -15943,6 +15938,9 @@ namespace haswell {
 
 using namespace simdjson;
 
+/**
+ * @private
+ */
 class implementation final : public simdjson::implementation {
 public:
   simdjson_inline implementation() : simdjson::implementation(
@@ -18118,6 +18116,9 @@ using namespace simdjson;
 using namespace simdjson::dom;
 } // namespace
 
+/**
+ * @private
+ */
 class implementation final : public simdjson::implementation {
 public:
   simdjson_inline implementation()
@@ -20424,6 +20425,9 @@ using namespace simdjson;
 using namespace simdjson::dom;
 }
 
+/**
+ * @private
+ */
 class implementation final : public simdjson::implementation {
 public:
   simdjson_inline implementation() : simdjson::implementation("westmere", "Intel/AMD SSE4.2", internal::instruction_set::SSE42 | internal::instruction_set::PCLMULQDQ) {}

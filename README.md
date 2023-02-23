@@ -3,7 +3,9 @@
 [![Ubuntu 20.04 CI](https://github.com/simdjson/simdjson/workflows/Ubuntu%2020.04%20CI%20(GCC%209)/badge.svg)](https://simdjson.org/plots.html)
 ![VS16-CI](https://github.com/simdjson/simdjson/workflows/VS16-CI/badge.svg)
 ![MinGW64-CI](https://github.com/simdjson/simdjson/workflows/MinGW64-CI/badge.svg)
-[![][license img]][license]  [![Doxygen Documentation](https://img.shields.io/badge/docs-doxygen-green.svg)](https://simdjson.org/api/3.0.0/index.html)
+[![][license img]][license]
+
+[![Doxygen Documentation](https://img.shields.io/badge/docs-doxygen-green.svg)](https://simdjson.github.io/simdjson/)
 
 simdjson : Parsing gigabytes of JSON per second
 ===============================================
@@ -146,6 +148,7 @@ We distinguish between "bindings" (which just wrap the C++ code) and a port to a
 - [lua-simdjson](https://github.com/FourierTransformer/lua-simdjson): lua bindings.
 - [hermes-json](https://hackage.haskell.org/package/hermes-json): haskell bindings.
 - [simdjzon](https://github.com/travisstaloch/simdjzon): zig port.
+- [JSON-Simd](https://github.com/rawleyfowler/JSON-simd): Raku bindings.
 
 About simdjson
 --------------
@@ -188,7 +191,7 @@ License
 
 This code is made available under the [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0.html).
 
-Under Windows, we build some tools using the windows/dirent_portable.h file (which is outside our library code): it under the liberal (business-friendly) MIT license.
+Under Windows, we build some tools using the windows/dirent_portable.h file (which is outside our library code): it is under the liberal (business-friendly) MIT license.
 
 For compilers that do not support [C++17](https://en.wikipedia.org/wiki/C%2B%2B17), we bundle the string-view library which is published under the [Boost license](http://www.boost.org/LICENSE_1_0.txt). Like the Apache license, the Boost license is a permissive license allowing commercial redistribution.
 

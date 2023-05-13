@@ -41,7 +41,7 @@ void basics_error_2() {
       cout << "Make/Model: " << make << "/" << model << endl;
 
       // Casting a JSON element to an integer
-      uint64_t year;
+      uint64_t year{};
       if ((error = car["year"].get(year))) { cerr << error << endl; exit(1); }
       cout << "- This car is " << 2020 - year << "years old." << endl;
 
@@ -81,13 +81,13 @@ void basics_error_3() {
           dom::object innerobj;
           if ((error = key_value.value.get(innerobj))) { cerr << error << endl; exit(1); }
 
-          double va, vb;
+          double va{}, vb{};
           if ((error = innerobj["a"].get(va))) { cerr << error << endl; exit(1); }
           cout << "a: " << va << ", ";
           if ((error = innerobj["b"].get(vb))) { cerr << error << endl; exit(1); }
           cout << "b: " << vb << ", ";
 
-          int64_t vc;
+          int64_t vc{};
           if ((error = innerobj["c"].get(vc))) { cerr << error << endl; exit(1); }
           cout << "c: " << vc << endl;
       }
@@ -132,7 +132,7 @@ void basics_error_2_cpp17() {
     cout << "Make/Model: " << make << "/" << model << endl;
 
     // Casting a JSON element to an integer
-    uint64_t year;
+    uint64_t year{};
     if ((error = car["year"].get(year))) { cerr << error << endl; exit(1); }
     cout << "- This car is " << 2020 - year << "years old." << endl;
 

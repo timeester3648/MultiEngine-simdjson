@@ -50,6 +50,23 @@ undefined behavior.")
   endif()
 endif()
 
+option(SIMDJSON_SANITIZE_MEMORY "Sanitize memory" OFF)
+
+
+if(SIMDJSON_SANITIZE_MEMORY)
+  message(STATUS "Setting the memory sanitizer.")
+  add_compile_options(
+      -fsanitize=memory -fno-sanitize-recover=all
+  )
+  link_libraries(
+      -fsanitize=memory -fno-sanitize-recover=all
+  )
+  # Ubuntu bug for GCC 5.0+ (safe for all versions)
+  if(CMAKE_COMPILER_IS_GNUCC)
+    link_libraries(-fuse-ld=gold)
+  endif()
+endif()
+
 if(SIMDJSON_SANITIZE_THREADS)
   message(STATUS "Setting both the thread sanitizer \
 and the undefined-behavior sanitizer.")
@@ -73,6 +90,8 @@ if(NOT is_multi_config AND NOT CMAKE_BUILD_TYPE)
   if(SIMDJSON_SANITIZE OR SIMDJSON_SANITIZE_UNDEFINED)
     message(STATUS "No build type selected and you have enabled the sanitizer, \
 default to Debug. Consider setting CMAKE_BUILD_TYPE.")
+    message(STATUS "Setting debug optimization flag to -O1 to help sanitizer.")
+    set(CMAKE_CXX_FLAGS_DEBUG "-O1" CACHE STRING "" FORCE)
     set(CMAKE_BUILD_TYPE Debug CACHE STRING "Choose the type of build." FORCE)
   else()
     message(STATUS "No build type selected, default to Release")
@@ -142,6 +161,11 @@ else()
       -Werror -Wall -Wextra -Weffc++ -Wsign-compare -Wshadow -Wwrite-strings
       -Wpointer-arith -Winit-self -Wconversion -Wno-sign-conversion
   )
+endif()
+
+option(SIMDJSON_GLIBCXX_ASSERTIONS "Set _GLIBCXX_ASSERTIONS" OFF)
+if (SIMDJSON_GLIBCXX_ASSERTIONS)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_GLIBCXX_ASSERTIONS")
 endif()
 
 #

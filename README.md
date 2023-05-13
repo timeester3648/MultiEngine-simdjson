@@ -1,6 +1,7 @@
 
 [![Ubuntu 20.04 CI](https://github.com/simdjson/simdjson/workflows/Ubuntu%2020.04%20CI%20(GCC%209)/badge.svg)](https://simdjson.org/plots.html)
 ![VS16-CI](https://github.com/simdjson/simdjson/workflows/VS16-CI/badge.svg)
+[![Fuzzing Status](https://oss-fuzz-build-logs.storage.googleapis.com/badges/simdjson.svg)](https://bugs.chromium.org/p/oss-fuzz/issues/list?sort=-opened&can=1&q=proj:simdjson)
 ![MinGW64-CI](https://github.com/simdjson/simdjson/workflows/MinGW64-CI/badge.svg)
 [![][license img]][license]
 
@@ -122,6 +123,9 @@ Real-world usage
 - [Apache Doris](https://github.com/apache/doris)
 - [Dgraph](https://github.com/dgraph-io/dgraph)
 - [UJRPC](https://github.com/unum-cloud/ujrpc)
+- [fastgltf](https://github.com/spnda/fastgltf)
+- [Clang Build Analyzer](https://github.com/aras-p/ClangBuildAnalyzer)
+- [vast](https://github.com/tenzir/vast)
 
 If you are planning to use simdjson in a product, please work from one of our releases.
 
@@ -144,10 +148,12 @@ We distinguish between "bindings" (which just wrap the C++ code) and a port to a
 - [simdjson-go](https://github.com/minio/simdjson-go): Go port using Golang assembly.
 - [rcppsimdjson](https://github.com/eddelbuettel/rcppsimdjson): R bindings.
 - [simdjson_erlang](https://github.com/ChomperT/simdjson_erlang): erlang bindings.
+- [simdjsone](https://github.com/saleyn/simdjsone): erlang bindings.
 - [lua-simdjson](https://github.com/FourierTransformer/lua-simdjson): lua bindings.
 - [hermes-json](https://hackage.haskell.org/package/hermes-json): haskell bindings.
 - [simdjzon](https://github.com/travisstaloch/simdjzon): zig port.
 - [JSON-Simd](https://github.com/rawleyfowler/JSON-simd): Raku bindings.
+- [JSON::SIMD](https://metacpan.org/pod/JSON::SIMD): Perl bindings; fully-featured JSON module that uses simdjson for decoding.
 
 About simdjson
 --------------

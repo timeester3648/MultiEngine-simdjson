@@ -74,7 +74,7 @@ namespace number_tests {
     for (int m = 10; m < 20; m++) {
       for (int i = -1024; i < 1024; i++) {
         auto str = std::to_string(i);
-        int64_t actual;
+        int64_t actual{};
         ASSERT_SUCCESS(parser.parse(str).get(actual));
         if (actual != i) {
           std::cerr << "JSON '" << str << "' parsed to " << actual << " instead of " << i << std::endl;
@@ -551,7 +551,7 @@ namespace parse_api_tests {
     ASSERT_SUCCESS( parser.parse_many(empty_batches_ndjson, BATCH_SIZE*16).get(stream) );
     for (auto doc : stream) {
       count++;
-      uint64_t val;
+      uint64_t val{};
       ASSERT_SUCCESS( doc.get(val) );
       ASSERT_EQUAL( val, count );
     }
@@ -956,6 +956,22 @@ namespace dom_api_tests {
     return true;
   }
 
+  bool issue1979() {
+    TEST_START();
+    auto json = R"({
+  "@avito-core/toggles:6.1.18": {
+    "add_model_review_from": true
+  }
+ })"_padded;
+    simdjson::dom::parser parser;
+    simdjson::dom::element doc;
+    ASSERT_SUCCESS(parser.parse(json).get(doc));
+    simdjson::dom::object main_object;
+    ASSERT_SUCCESS(doc.get_object().get(main_object));
+    ASSERT_SUCCESS(main_object["@avito-core/toggles:6.1.18"].get_object().error())
+    TEST_SUCCEED();
+  }
+
   bool document_object_index() {
     std::cout << "Running " << __func__ << std::endl;
     string json(R"({ "a": 1, "b": 2, "c/d": 3})");
@@ -978,14 +994,6 @@ namespace dom_api_tests {
 
     simdjson::error_code error;
     simdjson_unused element val;
-// This is disabled, see https://github.com/simdjson/simdjson/issues/1243
-//#ifndef _LIBCPP_VERSION // should work everywhere but with libc++, must include the <ciso646> header.
-//    std::tie(val,error) = object["d"];
-//    ASSERT_ERROR( error, NO_SUCH_FIELD );
-//    std::tie(std::ignore,error) = object["d"];
-//    ASSERT_ERROR( error, NO_SUCH_FIELD );
-//#endif
-    // tie(val, error) = object["d"]; fails with "no viable overloaded '='" on Apple clang version 11.0.0	    tie(val, error) = doc["d"];
     object["d"].tie(val, error);
     ASSERT_ERROR( error, NO_SUCH_FIELD );
     ASSERT_ERROR( object["d"].get(val), NO_SUCH_FIELD );
@@ -1023,7 +1031,7 @@ namespace dom_api_tests {
     std::cout << "Running " << __func__ << std::endl;
     // Prints the number of results in twitter.json
     dom::parser parser;
-    uint64_t result_count;
+    uint64_t result_count{};
     ASSERT_SUCCESS( parser.load(TWITTER_JSON)["search_metadata"]["count"].get(result_count) );
     ASSERT_EQUAL( result_count, 100 );
     return true;
@@ -1039,7 +1047,7 @@ namespace dom_api_tests {
     for (auto tweet : tweets) {
       object user;
       ASSERT_SUCCESS( tweet["user"].get(user) );
-      bool default_profile;
+      bool default_profile{};
       ASSERT_SUCCESS( user["default_profile"].get(default_profile) );
       if (default_profile) {
         std::string_view screen_name;
@@ -1254,6 +1262,7 @@ namespace dom_api_tests {
     #if SIMDJSON_ENABLE_DEPRECATED_API
         ParsedJson_Iterator_test() &&
     #endif
+           issue1979() &&
            object_iterator() &&
            array_iterator() &&
            object_iterator_empty() &&

@@ -16,6 +16,7 @@ An overview of what you need to know to use simdjson, with examples.
 * [Server Loops: Long-Running Processes and Memory Capacity](#server-loops-long-running-processes-and-memory-capacity)
 * [Best Use of the DOM API](#best-use-of-the-dom-api)
 * [Padding and Temporary Copies](#padding-and-temporary-copies)
+* [Performance Tips](#performance-tips)
 
 DOM vs On Demand
 ----------------------------------------------
@@ -42,6 +43,20 @@ SIMDJSON_PADDING bytes at the end) and calling `parse()`:
 ```c++
 dom::parser parser;
 dom::element doc = parser.parse("[1,2,3]"_padded); // parse a string, the _padded suffix creates a simdjson::padded_string instance
+```
+
+You can copy your data directly on a `simdjson::padded_string` as follows:
+
+```c++
+const char * data = "my data"; // 7 bytes
+simdjson::padded_string my_padded_data(data, 7); // copies to a padded buffer
+```
+
+Or as follows...
+
+```c++
+std::string data = "my data";
+simdjson::padded_string my_padded_data(data); // copies to a padded buffer
 ```
 
 The parsed document resulting from the `parser.load` and `parser.parse` calls depends on the `parser` instance. Thus the `parser` instance must remain in scope. Furthermore, you must have at most one parsed document in play per `parser` instance.
@@ -644,3 +659,9 @@ simdjson::dom::element element = parser.parse(padded_json_copy.get(), json_len, 
 ````
 
 Setting the `realloc_if_needed` parameter `false` in this manner may lead to better performance since copies are avoided, but it requires that the user takes more responsibilities: the simdjson library cannot verify that the input buffer was padded with SIMDJSON_PADDING extra bytes.
+
+Performance Tips
+---------------------
+
+- For release builds, we recommend setting `NDEBUG` pre-processor directive when compiling the `simdjson` library. Importantly, using the optimization flags `-O2` or `-O3` under GCC and LLVM clang does not set the `NDEBUG` directrive, you must set it manually (e.g., `-DNDEBUG`).
+- For long streams of JSON documents, consider [`iterate_many`](iterate_many.md) and [`parse_many`](parse_many.md) for better performance.

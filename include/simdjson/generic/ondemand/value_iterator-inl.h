@@ -34,12 +34,17 @@ simdjson_warn_unused simdjson_inline simdjson_result<bool> value_iterator::start
   return true;
 }
 
-simdjson_warn_unused simdjson_inline simdjson_result<bool> value_iterator::started_root_object() noexcept {
+simdjson_warn_unused simdjson_inline error_code value_iterator::check_root_object() noexcept {
   // When in streaming mode, we cannot expect peek_last() to be the last structural element of the
   // current document. It only works in the normal mode where we have indexed a single document.
   // Note that adding a check for 'streaming' is not expensive since we only have at most
   // one root element.
   if ( ! _json_iter->streaming() ) {
+    // The following lines do not fully protect against garbage content within the
+    // object: e.g., `{"a":2} foo }`. Users concerned with garbage content should
+    // call `at_end()` on the document instance at the end of the processing to
+    // ensure that the processing has finished at the end.
+    //
     if (*_json_iter->peek_last() != '}') {
       _json_iter->abandon();
       return report_error(INCOMPLETE_ARRAY_OR_OBJECT, "missing } at end");
@@ -56,6 +61,12 @@ simdjson_warn_unused simdjson_inline simdjson_result<bool> value_iterator::start
       return report_error(INCOMPLETE_ARRAY_OR_OBJECT, "the document is unbalanced");
     }
   }
+  return SUCCESS;
+}
+
+simdjson_warn_unused simdjson_inline simdjson_result<bool> value_iterator::started_root_object() noexcept {
+  auto error = check_root_object();
+  if(error) { return error; }
   return started_object();
 }
 
@@ -419,12 +430,17 @@ simdjson_warn_unused simdjson_inline simdjson_result<bool> value_iterator::start
   return true;
 }
 
-simdjson_warn_unused simdjson_inline simdjson_result<bool> value_iterator::started_root_array() noexcept {
+simdjson_warn_unused simdjson_inline error_code value_iterator::check_root_array() noexcept {
   // When in streaming mode, we cannot expect peek_last() to be the last structural element of the
   // current document. It only works in the normal mode where we have indexed a single document.
   // Note that adding a check for 'streaming' is not expensive since we only have at most
   // one root element.
   if ( ! _json_iter->streaming() ) {
+    // The following lines do not fully protect against garbage content within the
+    // array: e.g., `[1, 2] foo]`. Users concerned with garbage content should
+    // also call `at_end()` on the document instance at the end of the processing to
+    // ensure that the processing has finished at the end.
+    //
     if (*_json_iter->peek_last() != ']') {
       _json_iter->abandon();
       return report_error(INCOMPLETE_ARRAY_OR_OBJECT, "missing ] at end");
@@ -441,6 +457,12 @@ simdjson_warn_unused simdjson_inline simdjson_result<bool> value_iterator::start
       return report_error(INCOMPLETE_ARRAY_OR_OBJECT, "the document is unbalanced");
     }
   }
+  return SUCCESS;
+}
+
+simdjson_warn_unused simdjson_inline simdjson_result<bool> value_iterator::started_root_array() noexcept {
+  auto error = check_root_array();
+  if (error) { return error; }
   return started_array();
 }
 
@@ -551,7 +573,7 @@ simdjson_inline simdjson_result<bool> value_iterator::is_root_integer(bool check
   auto max_len = peek_start_length();
   auto json = peek_root_scalar("is_root_integer");
   uint8_t tmpbuf[20+1]; // <20 digits> is the longest possible unsigned integer
-  if (!_json_iter->copy_to_buffer(json, max_len, tmpbuf)) {
+  if (!_json_iter->copy_to_buffer(json, max_len, tmpbuf, 20+1)) {
     return false; // if there are more than 20 characters, it cannot be represented as an integer.
   }
   auto answer = numberparsing::is_integer(tmpbuf);
@@ -569,7 +591,7 @@ simdjson_inline simdjson_result<SIMDJSON_IMPLEMENTATION::ondemand::number_type> 
   // 1074 is the maximum number of significant fractional digits. Add 8 more digits for the biggest
   // number: -0.<fraction>e-308.
   uint8_t tmpbuf[1074+8+1];
-  if (!_json_iter->copy_to_buffer(json, max_len, tmpbuf)) {
+  if (!_json_iter->copy_to_buffer(json, max_len, tmpbuf, 1074+8+1)) {
     logger::log_error(*_json_iter, start_position(), depth(), "Root number more than 1082 characters");
     return NUMBER_ERROR;
   }
@@ -584,7 +606,7 @@ simdjson_inline simdjson_result<number> value_iterator::get_root_number(bool che
   // 1074 is the maximum number of significant fractional digits. Add 8 more digits for the biggest
   // number: -0.<fraction>e-308.
   uint8_t tmpbuf[1074+8+1];
-  if (!_json_iter->copy_to_buffer(json, max_len, tmpbuf)) {
+  if (!_json_iter->copy_to_buffer(json, max_len, tmpbuf, 1074+8+1)) {
     logger::log_error(*_json_iter, start_position(), depth(), "Root number more than 1082 characters");
     return NUMBER_ERROR;
   }
@@ -612,7 +634,7 @@ simdjson_warn_unused simdjson_inline simdjson_result<uint64_t> value_iterator::g
   auto max_len = peek_start_length();
   auto json = peek_root_scalar("uint64");
   uint8_t tmpbuf[20+1]; // <20 digits> is the longest possible unsigned integer
-  if (!_json_iter->copy_to_buffer(json, max_len, tmpbuf)) {
+  if (!_json_iter->copy_to_buffer(json, max_len, tmpbuf, 20+1)) {
     logger::log_error(*_json_iter, start_position(), depth(), "Root number more than 20 characters");
     return NUMBER_ERROR;
   }
@@ -627,7 +649,7 @@ simdjson_warn_unused simdjson_inline simdjson_result<uint64_t> value_iterator::g
   auto max_len = peek_start_length();
   auto json = peek_root_scalar("uint64");
   uint8_t tmpbuf[20+1]; // <20 digits> is the longest possible unsigned integer
-  if (!_json_iter->copy_to_buffer(json, max_len, tmpbuf)) {
+  if (!_json_iter->copy_to_buffer(json, max_len, tmpbuf, 20+1)) {
     logger::log_error(*_json_iter, start_position(), depth(), "Root number more than 20 characters");
     return NUMBER_ERROR;
   }
@@ -642,7 +664,7 @@ simdjson_warn_unused simdjson_inline simdjson_result<int64_t> value_iterator::ge
   auto max_len = peek_start_length();
   auto json = peek_root_scalar("int64");
   uint8_t tmpbuf[20+1]; // -<19 digits> is the longest possible integer
-  if (!_json_iter->copy_to_buffer(json, max_len, tmpbuf)) {
+  if (!_json_iter->copy_to_buffer(json, max_len, tmpbuf, 20+1)) {
     logger::log_error(*_json_iter, start_position(), depth(), "Root number more than 20 characters");
     return NUMBER_ERROR;
   }
@@ -658,7 +680,7 @@ simdjson_warn_unused simdjson_inline simdjson_result<int64_t> value_iterator::ge
   auto max_len = peek_start_length();
   auto json = peek_root_scalar("int64");
   uint8_t tmpbuf[20+1]; // -<19 digits> is the longest possible integer
-  if (!_json_iter->copy_to_buffer(json, max_len, tmpbuf)) {
+  if (!_json_iter->copy_to_buffer(json, max_len, tmpbuf, 20+1)) {
     logger::log_error(*_json_iter, start_position(), depth(), "Root number more than 20 characters");
     return NUMBER_ERROR;
   }
@@ -677,7 +699,7 @@ simdjson_warn_unused simdjson_inline simdjson_result<double> value_iterator::get
   // 1074 is the maximum number of significant fractional digits. Add 8 more digits for the biggest
   // number: -0.<fraction>e-308.
   uint8_t tmpbuf[1074+8+1];
-  if (!_json_iter->copy_to_buffer(json, max_len, tmpbuf)) {
+  if (!_json_iter->copy_to_buffer(json, max_len, tmpbuf, 1074+8+1)) {
     logger::log_error(*_json_iter, start_position(), depth(), "Root number more than 1082 characters");
     return NUMBER_ERROR;
   }
@@ -696,7 +718,7 @@ simdjson_warn_unused simdjson_inline simdjson_result<double> value_iterator::get
   // 1074 is the maximum number of significant fractional digits. Add 8 more digits for the biggest
   // number: -0.<fraction>e-308.
   uint8_t tmpbuf[1074+8+1];
-  if (!_json_iter->copy_to_buffer(json, max_len, tmpbuf)) {
+  if (!_json_iter->copy_to_buffer(json, max_len, tmpbuf, 1074+8+1)) {
     logger::log_error(*_json_iter, start_position(), depth(), "Root number more than 1082 characters");
     return NUMBER_ERROR;
   }
@@ -711,7 +733,7 @@ simdjson_warn_unused simdjson_inline simdjson_result<bool> value_iterator::get_r
   auto max_len = peek_start_length();
   auto json = peek_root_scalar("bool");
   uint8_t tmpbuf[5+1];
-  if (!_json_iter->copy_to_buffer(json, max_len, tmpbuf)) { return incorrect_type_error("Not a boolean"); }
+  if (!_json_iter->copy_to_buffer(json, max_len, tmpbuf, 5+1)) { return incorrect_type_error("Not a boolean"); }
   auto result = parse_bool(tmpbuf);
   if(result.error() == SUCCESS) {
     if (check_trailing && !_json_iter->is_single_token()) { return TRAILING_CONTENT; }

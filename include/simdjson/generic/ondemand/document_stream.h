@@ -1,4 +1,13 @@
-#include "simdjson/error.h"
+#ifndef SIMDJSON_GENERIC_ONDEMAND_DOCUMENT_STREAM_H
+
+#ifndef SIMDJSON_CONDITIONAL_INCLUDE
+#define SIMDJSON_GENERIC_ONDEMAND_DOCUMENT_STREAM_H
+#include "simdjson/generic/ondemand/base.h"
+#include "simdjson/generic/implementation_simdjson_result_base.h"
+#include "simdjson/generic/ondemand/document.h"
+#include "simdjson/generic/ondemand/parser.h"
+#endif // SIMDJSON_CONDITIONAL_INCLUDE
+
 #ifdef SIMDJSON_THREADS_ENABLED
 #include <thread>
 #include <mutex>
@@ -8,10 +17,6 @@
 namespace simdjson {
 namespace SIMDJSON_IMPLEMENTATION {
 namespace ondemand {
-
-class parser;
-class json_iterator;
-class document;
 
 #ifdef SIMDJSON_THREADS_ENABLED
 /** @private Custom worker class **/
@@ -222,7 +227,8 @@ private:
     ondemand::parser &parser,
     const uint8_t *buf,
     size_t len,
-    size_t batch_size
+    size_t batch_size,
+    bool allow_comma_separated
   ) noexcept;
 
   /**
@@ -271,6 +277,7 @@ private:
   const uint8_t *buf;
   size_t len;
   size_t batch_size;
+  bool allow_comma_separated;
   /**
    * We are going to use just one document instance. The document owns
    * the json_iterator. It implies that we only ever pass a reference
@@ -328,3 +335,5 @@ public:
 };
 
 } // namespace simdjson
+
+#endif // SIMDJSON_GENERIC_ONDEMAND_DOCUMENT_STREAM_H

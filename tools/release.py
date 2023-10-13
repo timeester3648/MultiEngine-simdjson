@@ -23,8 +23,9 @@ def toversionstring(major, minor, rev):
 
 def topaddedversionstring(major, minor, rev):
     return str(major)+str(minor).zfill(3)+str(rev).zfill(3)
-
+print("Calling git rev-parse --abbrev-ref HEAD")
 pipe = subprocess.Popen(["git", "rev-parse", "--abbrev-ref", "HEAD"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+print("the commandline is {}".format(pipe.args))
 branchresult = pipe.communicate()[0].decode().strip()
 
 if(branchresult != "master"):
@@ -34,8 +35,9 @@ ret = subprocess.call(["git", "remote", "update"])
 
 if(ret != 0):
     sys.exit(ret)
-
+print("Calling git log HEAD.. --oneline")
 pipe = subprocess.Popen(["git", "log", "HEAD..", "--oneline"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+print("the commandline is {}".format(pipe.args))
 uptodateresult = pipe.communicate()[0].decode().strip()
 
 if(len(uptodateresult) != 0):
@@ -80,15 +82,6 @@ else :
 
 atleastminor= (currentv[0] != newversion[0]) or (currentv[1] != newversion[1])
 
-if(atleastminor):
-    print(colored(0, 255, 0, "This is more than a revision."))
-    releasefile = maindir + os.sep + "RELEASES.md"
-    releasedata = open(releasefile).read()
-    pattern = re.compile("#\s+\d+\.\d+")
-    m = pattern.search(releasedata)
-    if(m == None):
-        print(colored(255, 0, 0, "You are preparing a new minor release and you have not yet updated RELEASES.md."))
-        sys.exit(-1)
 
 versionfilerel = os.sep + "include" + os.sep + "simdjson" + os.sep + "simdjson_version.h"
 versionfile = maindir + versionfilerel
@@ -160,12 +153,17 @@ for line in fileinput.input(doxyfile, inplace=1, backup='.bak'):
 print("modified "+doxyfile+", a backup was made")
 
 
+print("running amalgamate.py")
+cp = subprocess.run(["python3", maindir+ os.sep + "singleheader/amalgamate.py"], stdout=subprocess.DEVNULL)  # doesn't capture output
+print("the commandline is {}".format(cp.args))
 
-cp = subprocess.run(["python3", "amalgamate.py"], stdout=subprocess.DEVNULL, cwd=maindir+ os.sep + "singleheader")  # doesn't capture output
 if(cp.returncode != 0):
     print("Failed to run amalgamate")
 
+print("running doxygen")
 cp = subprocess.run(["doxygen"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, cwd=maindir)  # doesn't capture output
+print("the commandline is {}".format(cp.args))
+
 if(cp.returncode != 0):
     print("Failed to run doxygen")
 

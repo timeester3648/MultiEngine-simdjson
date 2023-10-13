@@ -1,20 +1,11 @@
 #ifndef SIMDJSON_DOM_ELEMENT_H
 #define SIMDJSON_DOM_ELEMENT_H
 
-#include "simdjson/common_defs.h"
-#include "simdjson/error.h"
-#include "simdjson/internal/tape_ref.h"
-#include <ostream>
+#include "simdjson/dom/base.h"
+#include "simdjson/dom/array.h"
 
 namespace simdjson {
-namespace internal {
-template<typename T>
-class string_builder;
-}
 namespace dom {
-class array;
-class document;
-class object;
 
 /**
  * The actual concrete type of a JSON element
@@ -460,6 +451,22 @@ public:
    */
   inline simdjson_result<element> at_key_case_insensitive(std::string_view key) const noexcept;
 
+  /**
+   * operator< defines a total order for element allowing to use them in
+   * ordered C++ STL containers
+   *
+   * @return TRUE if the key appears before the other one in the tape
+   */
+  inline bool operator<(const element &other) const noexcept;
+
+  /**
+   * operator== allows to verify if two element values reference the
+   * same JSON item
+   *
+   * @return TRUE if the two values references the same JSON element
+   */
+  inline bool operator==(const element &other) const noexcept;
+
   /** @private for debugging. Prints out the root element. */
   inline bool dump_raw_tape(std::ostream &out) const noexcept;
 
@@ -536,7 +543,6 @@ public:
   simdjson_inline dom::array::iterator end() const noexcept(false);
 #endif // SIMDJSON_EXCEPTIONS
 };
-
 
 } // namespace simdjson
 

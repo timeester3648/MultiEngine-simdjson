@@ -1,13 +1,20 @@
+#ifndef SIMDJSON_SRC_GENERIC_STAGE1_JSON_STRUCTURAL_INDEXER_H
+
+#ifndef SIMDJSON_CONDITIONAL_INCLUDE
+#define SIMDJSON_SRC_GENERIC_STAGE1_JSON_STRUCTURAL_INDEXER_H
+#include <generic/stage1/base.h>
+#include <generic/stage1/utf8_lookup4_algorithm.h>
+#include <generic/stage1/buf_block_reader.h>
+#include <generic/stage1/json_string_scanner.h>
+#include <generic/stage1/json_scanner.h>
+#include <generic/stage1/json_minifier.h>
+#include <generic/stage1/find_next_document_index.h>
+#endif // SIMDJSON_CONDITIONAL_INCLUDE
+
 // This file contains the common code every implementation uses in stage1
 // It is intended to be included multiple times and compiled multiple times
 // We assume the file in which it is included already includes
 // "simdjson/stage1.h" (this simplifies amalgation)
-
-#include "generic/stage1/buf_block_reader.h"
-#include "generic/stage1/json_string_scanner.h"
-#include "generic/stage1/json_scanner.h"
-#include "generic/stage1/json_minifier.h"
-#include "generic/stage1/find_next_document_index.h"
 
 namespace simdjson {
 namespace SIMDJSON_IMPLEMENTATION {
@@ -20,15 +27,67 @@ public:
 
   simdjson_inline bit_indexer(uint32_t *index_buf) : tail(index_buf) {}
 
+#if SIMDJSON_PREFER_REVERSE_BITS
+  /**
+    * ARM lacks a fast trailing zero instruction, but it has a fast
+    * bit reversal instruction and a fast leading zero instruction.
+    * Thus it may be profitable to reverse the bits (once) and then
+    * to rely on a sequence of instructions that call the leading
+    * zero instruction.
+    *
+    * Performance notes:
+    * The chosen routine is not optimal in terms of data dependency
+    * since zero_leading_bit might require two instructions. However,
+    * it tends to minimize the total number of instructions which is
+    * beneficial.
+    */
+  simdjson_inline void write_index(uint32_t idx, uint64_t& rev_bits, int i) {
+    int lz = leading_zeroes(rev_bits);
+    this->tail[i] = static_cast<uint32_t>(idx) + lz;
+    rev_bits = zero_leading_bit(rev_bits, lz);
+  }
+#else
+  /**
+    * Under recent x64 systems, we often have both a fast trailing zero
+    * instruction and a fast 'clear-lower-bit' instruction so the following
+    * algorithm can be competitive.
+    */
+
+  simdjson_inline void write_index(uint32_t idx, uint64_t& bits, int i) {
+    this->tail[i] = idx + trailing_zeroes(bits);
+    bits = clear_lowest_bit(bits);
+  }
+#endif // SIMDJSON_PREFER_REVERSE_BITS
+
+  template <int START, int N>
+  simdjson_inline int write_indexes(uint32_t idx, uint64_t& bits) {
+    write_index(idx, bits, START);
+    SIMDJSON_IF_CONSTEXPR (N > 1) {
+      write_indexes<(N-1>0?START+1:START), (N-1>=0?N-1:1)>(idx, bits);
+    }
+    return START+N;
+  }
+
+  template <int START, int END, int STEP>
+  simdjson_inline int write_indexes_stepped(uint32_t idx, uint64_t& bits, int cnt) {
+    write_indexes<START, STEP>(idx, bits);
+    SIMDJSON_IF_CONSTEXPR ((START+STEP)  < END) {
+      if (simdjson_unlikely((START+STEP) < cnt)) {
+        write_indexes_stepped<(START+STEP<END?START+STEP:END), END, STEP>(idx, bits, cnt);
+      }
+    }
+    return ((END-START) % STEP) == 0 ? END : (END-START) - ((END-START) % STEP) + STEP;
+  }
+
   // flatten out values in 'bits' assuming that they are are to have values of idx
   // plus their position in the bitvector, and store these indexes at
   // base_ptr[base] incrementing base as we go
   // will potentially store extra values beyond end of valid bits, so base_ptr
   // needs to be large enough to handle this
   //
-  // If the kernel sets SIMDJSON_CUSTOM_BIT_INDEXER, then it will provide its own
-  // version of the code.
-#ifdef SIMDJSON_CUSTOM_BIT_INDEXER
+  // If the kernel sets SIMDJSON_GENERIC_JSON_STRUCTURAL_INDEXER_CUSTOM_BIT_INDEXER, then it
+  // will provide its own version of the code.
+#ifdef SIMDJSON_GENERIC_JSON_STRUCTURAL_INDEXER_CUSTOM_BIT_INDEXER
   simdjson_inline void write(uint32_t idx, uint64_t bits);
 #else
   simdjson_inline void write(uint32_t idx, uint64_t bits) {
@@ -37,93 +96,31 @@ public:
     // it helps tremendously.
     if (bits == 0)
         return;
-#if SIMDJSON_PREFER_REVERSE_BITS
-    /**
-     * ARM lacks a fast trailing zero instruction, but it has a fast
-     * bit reversal instruction and a fast leading zero instruction.
-     * Thus it may be profitable to reverse the bits (once) and then
-     * to rely on a sequence of instructions that call the leading
-     * zero instruction.
-     *
-     * Performance notes:
-     * The chosen routine is not optimal in terms of data dependency
-     * since zero_leading_bit might require two instructions. However,
-     * it tends to minimize the total number of instructions which is
-     * beneficial.
-     */
 
-    uint64_t rev_bits = reverse_bits(bits);
     int cnt = static_cast<int>(count_ones(bits));
-    int i = 0;
-    // Do the first 8 all together
-    for (; i<8; i++) {
-      int lz = leading_zeroes(rev_bits);
-      this->tail[i] = static_cast<uint32_t>(idx) + lz;
-      rev_bits = zero_leading_bit(rev_bits, lz);
-    }
-    // Do the next 8 all together (we hope in most cases it won't happen at all
-    // and the branch is easily predicted).
-    if (simdjson_unlikely(cnt > 8)) {
-      i = 8;
-      for (; i<16; i++) {
-        int lz = leading_zeroes(rev_bits);
-        this->tail[i] = static_cast<uint32_t>(idx) + lz;
-        rev_bits = zero_leading_bit(rev_bits, lz);
-      }
 
+#if SIMDJSON_PREFER_REVERSE_BITS
+    bits = reverse_bits(bits);
+#endif
+#ifdef SIMDJSON_STRUCTURAL_INDEXER_STEP
+    static constexpr const int STEP = SIMDJSON_STRUCTURAL_INDEXER_STEP;
+#else
+    static constexpr const int STEP = 4;
+#endif
+    static constexpr const int STEP_UNTIL = 24;
 
-      // Most files don't have 16+ structurals per block, so we take several basically guaranteed
-      // branch mispredictions here. 16+ structurals per block means either punctuation ({} [] , :)
-      // or the start of a value ("abc" true 123) every four characters.
-      if (simdjson_unlikely(cnt > 16)) {
-        i = 16;
-        while (rev_bits != 0) {
-          int lz = leading_zeroes(rev_bits);
-          this->tail[i++] = static_cast<uint32_t>(idx) + lz;
-          rev_bits = zero_leading_bit(rev_bits, lz);
+    write_indexes_stepped<0, STEP_UNTIL, STEP>(idx, bits, cnt);
+    SIMDJSON_IF_CONSTEXPR (STEP_UNTIL < 64) {
+      if (simdjson_unlikely(STEP_UNTIL < cnt)) {
+        for (int i=STEP_UNTIL; i<cnt; i++) {
+          write_index(idx, bits, i);
         }
       }
     }
-    this->tail += cnt;
-#else // SIMDJSON_PREFER_REVERSE_BITS
-    /**
-     * Under recent x64 systems, we often have both a fast trailing zero
-     * instruction and a fast 'clear-lower-bit' instruction so the following
-     * algorithm can be competitive.
-     */
-
-    int cnt = static_cast<int>(count_ones(bits));
-    // Do the first 8 all together
-    for (int i=0; i<8; i++) {
-      this->tail[i] = idx + trailing_zeroes(bits);
-      bits = clear_lowest_bit(bits);
-    }
-
-    // Do the next 8 all together (we hope in most cases it won't happen at all
-    // and the branch is easily predicted).
-    if (simdjson_unlikely(cnt > 8)) {
-      for (int i=8; i<16; i++) {
-        this->tail[i] = idx + trailing_zeroes(bits);
-        bits = clear_lowest_bit(bits);
-      }
-
-      // Most files don't have 16+ structurals per block, so we take several basically guaranteed
-      // branch mispredictions here. 16+ structurals per block means either punctuation ({} [] , :)
-      // or the start of a value ("abc" true 123) every four characters.
-      if (simdjson_unlikely(cnt > 16)) {
-        int i = 16;
-        do {
-          this->tail[i] = idx + trailing_zeroes(bits);
-          bits = clear_lowest_bit(bits);
-          i++;
-        } while (i < cnt);
-      }
-    }
 
     this->tail += cnt;
-#endif
   }
-#endif // SIMDJSON_CUSTOM_BIT_INDEXER
+#endif // SIMDJSON_GENERIC_JSON_STRUCTURAL_INDEXER_CUSTOM_BIT_INDEXER
 
 };
 
@@ -354,3 +351,8 @@ simdjson_inline error_code json_structural_indexer::finish(dom_parser_implementa
 } // unnamed namespace
 } // namespace SIMDJSON_IMPLEMENTATION
 } // namespace simdjson
+
+// Clear CUSTOM_BIT_INDEXER so other implementations can set it if they need to.
+#undef SIMDJSON_GENERIC_JSON_STRUCTURAL_INDEXER_CUSTOM_BIT_INDEXER
+
+#endif // SIMDJSON_SRC_GENERIC_STAGE1_JSON_STRUCTURAL_INDEXER_H

@@ -1,3 +1,11 @@
+#ifndef SIMDJSON_SRC_GENERIC_STAGE1_UTF8_LOOKUP4_ALGORITHM_H
+
+#ifndef SIMDJSON_CONDITIONAL_INCLUDE
+#define SIMDJSON_SRC_GENERIC_STAGE1_UTF8_LOOKUP4_ALGORITHM_H
+#include <generic/stage1/base.h>
+#include <generic/dom_parser_implementation.h>
+#endif // SIMDJSON_CONDITIONAL_INCLUDE
+
 namespace simdjson {
 namespace SIMDJSON_IMPLEMENTATION {
 namespace {
@@ -162,14 +170,6 @@ using namespace simd;
       this->error |= this->prev_incomplete;
     }
 
-#ifndef SIMDJSON_IF_CONSTEXPR
-#if SIMDJSON_CPLUSPLUS17
-#define SIMDJSON_IF_CONSTEXPR if constexpr
-#else
-#define SIMDJSON_IF_CONSTEXPR if
-#endif
-#endif
-
     simdjson_inline void check_next_input(const simd8x64<uint8_t>& input) {
       if(simdjson_likely(is_ascii(input))) {
         this->error |= this->prev_incomplete;
@@ -202,8 +202,8 @@ using namespace simd;
   }; // struct utf8_checker
 } // namespace utf8_validation
 
-using utf8_validation::utf8_checker;
-
 } // unnamed namespace
 } // namespace SIMDJSON_IMPLEMENTATION
 } // namespace simdjson
+
+#endif // SIMDJSON_SRC_GENERIC_STAGE1_UTF8_LOOKUP4_ALGORITHM_H

@@ -1,6 +1,16 @@
+#ifndef SIMDJSON_SRC_GENERIC_STAGE1_BUF_BLOCK_READER_H
+
+#ifndef SIMDJSON_CONDITIONAL_INCLUDE
+#define SIMDJSON_SRC_GENERIC_STAGE1_BUF_BLOCK_READER_H
+#include <generic/stage1/base.h>
+#endif // SIMDJSON_CONDITIONAL_INCLUDE
+
+#include <cstring>
+
 namespace simdjson {
 namespace SIMDJSON_IMPLEMENTATION {
 namespace {
+namespace stage1 {
 
 // Walks through a buffer in block-sized increments, loading the last part with spaces
 template<size_t STEP_SIZE>
@@ -49,6 +59,17 @@ simdjson_unused static char * format_input_text(const simd8x64<uint8_t>& in) {
   return buf;
 }
 
+simdjson_unused static char * format_input_text(const simd8x64<uint8_t>& in, uint64_t mask) {
+  static char buf[sizeof(simd8x64<uint8_t>) + 1];
+  in.store(reinterpret_cast<uint8_t*>(buf));
+  for (size_t i=0; i<sizeof(simd8x64<uint8_t>); i++) {
+    if (buf[i] <= ' ') { buf[i] = '_'; }
+    if (!(mask & (size_t(1) << i))) { buf[i] = ' '; }
+  }
+  buf[sizeof(simd8x64<uint8_t>)] = '\0';
+  return buf;
+}
+
 simdjson_unused static char * format_mask(uint64_t mask) {
   static char buf[sizeof(simd8x64<uint8_t>) + 1];
   for (size_t i=0; i<64; i++) {
@@ -87,6 +108,9 @@ simdjson_inline void buf_block_reader<STEP_SIZE>::advance() {
   idx += STEP_SIZE;
 }
 
+} // namespace stage1
 } // unnamed namespace
 } // namespace SIMDJSON_IMPLEMENTATION
 } // namespace simdjson
+
+#endif // SIMDJSON_SRC_GENERIC_STAGE1_BUF_BLOCK_READER_H

@@ -1,8 +1,6 @@
 
 [![Ubuntu 20.04 CI](https://github.com/simdjson/simdjson/workflows/Ubuntu%2020.04%20CI%20(GCC%209)/badge.svg)](https://simdjson.org/plots.html)
-![VS16-CI](https://github.com/simdjson/simdjson/workflows/VS16-CI/badge.svg)
 [![Fuzzing Status](https://oss-fuzz-build-logs.storage.googleapis.com/badges/simdjson.svg)](https://bugs.chromium.org/p/oss-fuzz/issues/list?sort=-opened&can=1&q=proj:simdjson)
-![MinGW64-CI](https://github.com/simdjson/simdjson/workflows/MinGW64-CI/badge.svg)
 [![][license img]][license]
 
 [![Doxygen Documentation](https://img.shields.io/badge/docs-doxygen-green.svg)](https://simdjson.github.io/simdjson/)
@@ -28,15 +26,38 @@ This library is part of the [Awesome Modern C++](https://awesomecpp.com) list.
 Table of Contents
 -----------------
 
+* [Real-world usage](#real-world-usage)
 * [Quick Start](#quick-start)
 * [Documentation](#documentation)
 * [Performance results](#performance-results)
-* [Real-world usage](#real-world-usage)
 * [Bindings and Ports of simdjson](#bindings-and-ports-of-simdjson)
 * [About simdjson](#about-simdjson)
 * [Funding](#funding)
 * [Contributing to simdjson](#contributing-to-simdjson)
 * [License](#license)
+
+
+Real-world usage
+----------------
+
+- [ClickHouse](https://github.com/ClickHouse/ClickHouse)
+- [Facebook/Meta Velox](https://velox-lib.io)
+- [milvus](https://github.com/milvus-io/milvus)
+- [Clang Build Analyzer](https://github.com/aras-p/ClangBuildAnalyzer)
+- [Shopify HeapProfiler](https://github.com/Shopify/heap-profiler)
+- [StarRocks](https://github.com/StarRocks/starrocks)
+- [Microsoft FishStore](https://github.com/microsoft/FishStore)
+- [Intel PCM](https://github.com/intel/pcm)
+- [WatermelonDB](https://github.com/Nozbe/WatermelonDB)
+- [Apache Doris](https://github.com/apache/doris)
+- [Dgraph](https://github.com/dgraph-io/dgraph)
+- [UJRPC](https://github.com/unum-cloud/ujrpc)
+- [fastgltf](https://github.com/spnda/fastgltf)
+- [vast](https://github.com/tenzir/vast)
+- [ada-url](https://github.com/ada-url/ada)
+- [fastgron](https://github.com/adamritter/fastgron)
+
+If you are planning to use simdjson in a product, please work from one of our releases.
 
 Quick Start
 -----------
@@ -64,13 +85,13 @@ int main(void) {
     ondemand::document tweets = parser.iterate(json);
     std::cout << uint64_t(tweets["search_metadata"]["count"]) << " results." << std::endl;
 }
-
-   ```
+```
 3. `c++ -o quickstart quickstart.cpp simdjson.cpp`
 4. `./quickstart`
-   ```
+
+  ```
    100 results.
-   ```
+  ```
 
 Documentation
 -------------
@@ -81,7 +102,13 @@ Usage documentation is available:
 * [Performance](doc/performance.md) shows some more advanced scenarios and how to tune for them.
 * [Implementation Selection](doc/implementation-selection.md) describes runtime CPU detection and
   how you can work with it.
-* [API](https://simdjson.org/api/1.0.0/annotated.html) contains the automatically generated API documentation.
+* [API](https://simdjson.github.io/simdjson/) contains the automatically generated API documentation.
+
+
+Some users may want to browse code along with the compiled assembly. You want to check out the following lists of examples:
+
+* [simdjson examples with errors handled through exceptions](https://godbolt.org/z/98Kx9Kqjn)
+* [simdjson examples with errors without exceptions](https://godbolt.org/z/PKG7GdbPo)
 
 Performance results
 -------------------
@@ -110,24 +137,6 @@ For NDJSON files, we can exceed 3 GB/s with [our  multithreaded parsing function
 
 
 
-Real-world usage
-----------------
-
-- [ClickHouse](https://github.com/ClickHouse/ClickHouse)
-- [Clang Build Analyzer](https://github.com/aras-p/ClangBuildAnalyzer)
-- [Shopify HeapProfiler](https://github.com/Shopify/heap-profiler)
-- [StarRocks](https://github.com/StarRocks/starrocks)
-- [Microsoft FishStore](https://github.com/microsoft/FishStore)
-- [Intel PCM](https://github.com/intel/pcm)
-- [WatermelonDB](https://github.com/Nozbe/WatermelonDB)
-- [Apache Doris](https://github.com/apache/doris)
-- [Dgraph](https://github.com/dgraph-io/dgraph)
-- [UJRPC](https://github.com/unum-cloud/ujrpc)
-- [fastgltf](https://github.com/spnda/fastgltf)
-- [Clang Build Analyzer](https://github.com/aras-p/ClangBuildAnalyzer)
-- [vast](https://github.com/tenzir/vast)
-
-If you are planning to use simdjson in a product, please work from one of our releases.
 
 Bindings and Ports of simdjson
 ------------------------------

@@ -34,6 +34,7 @@ jobs:
         sudo apt update
         sudo apt-get install --quiet ninja-build valgrind zip unzip lsb-release wget software-properties-common gnupg
         wget https://apt.llvm.org/llvm.sh
+        sudo apt-get purge --auto-remove llvm python3-lldb-14 llvm-14
         chmod +x llvm.sh
         sudo ./llvm.sh $CLANGVERSION
 
@@ -124,7 +125,7 @@ jobs:
         done
 
     - name: Save the corpus as a github artifact
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: corpus
         path: corpus.tar
@@ -147,7 +148,7 @@ jobs:
       run: tar cf valgrind.tar valgrind-*.txt
 
     - name: Save valgrind output as a github artifact
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       if: always()
       with:
         name: valgrindresults
@@ -155,7 +156,7 @@ jobs:
         if-no-files-found: ignore
 
     - name: Archive any crashes as an artifact
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       if: always()
       with:
         name: crashes

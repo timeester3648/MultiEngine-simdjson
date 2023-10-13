@@ -1,11 +1,17 @@
-#ifndef SIMDJSON_INLINE_ELEMENT_H
-#define SIMDJSON_INLINE_ELEMENT_H
+#ifndef SIMDJSON_ELEMENT_INL_H
+#define SIMDJSON_ELEMENT_INL_H
 
-#include "simdjson/dom/array.h"
+#include "simdjson/dom/base.h"
 #include "simdjson/dom/element.h"
+#include "simdjson/dom/document.h"
 #include "simdjson/dom/object.h"
-#include <cstring>
-#include <utility>
+#include "simdjson/internal/tape_type.h"
+
+#include "simdjson/dom/object-inl.h"
+#include "simdjson/error-inl.h"
+
+#include <ostream>
+#include <limits>
 
 namespace simdjson {
 
@@ -404,6 +410,12 @@ inline simdjson_result<element> element::at_key(std::string_view key) const noex
 inline simdjson_result<element> element::at_key_case_insensitive(std::string_view key) const noexcept {
   return get<object>().at_key_case_insensitive(key);
 }
+inline bool element::operator<(const element &other) const noexcept {
+  return tape.json_index < other.tape.json_index;
+}
+inline bool element::operator==(const element &other) const noexcept {
+  return tape.json_index == other.tape.json_index;
+}
 
 inline bool element::dump_raw_tape(std::ostream &out) const noexcept {
   SIMDJSON_DEVELOPMENT_ASSERT(tape.usable()); // https://github.com/simdjson/simdjson/issues/1914
@@ -438,4 +450,4 @@ inline std::ostream& operator<<(std::ostream& out, element_type type) {
 
 } // namespace simdjson
 
-#endif // SIMDJSON_INLINE_ELEMENT_H
+#endif // SIMDJSON_ELEMENT_INL_H

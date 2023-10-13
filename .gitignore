@@ -105,6 +105,9 @@ objs
 !.vscode/launch.json
 !.vscode/extensions.json
 
+# clangd
+.cache
+
 # exclude project files
 **.sln
 **.vcxproj

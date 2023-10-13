@@ -1,4 +1,11 @@
-#include "generic/stage2/logger.h"
+#ifndef SIMDJSON_SRC_GENERIC_STAGE2_JSON_ITERATOR_H
+
+#ifndef SIMDJSON_CONDITIONAL_INCLUDE
+#define SIMDJSON_SRC_GENERIC_STAGE2_JSON_ITERATOR_H
+#include <generic/stage2/base.h>
+#include <generic/stage2/logger.h>
+#include <simdjson/generic/dom_parser_implementation.h>
+#endif // SIMDJSON_CONDITIONAL_INCLUDE
 
 namespace simdjson {
 namespace SIMDJSON_IMPLEMENTATION {
@@ -296,15 +303,17 @@ simdjson_warn_unused simdjson_inline error_code json_iterator::visit_root_primit
 }
 template<typename V>
 simdjson_warn_unused simdjson_inline error_code json_iterator::visit_primitive(V &visitor, const uint8_t *value) noexcept {
+  // Use the fact that most scalars are going to be either strings or numbers.
+  if(*value == '"') {
+    return visitor.visit_string(*this, value);
+  } else if (((*value - '0')  < 10) || (*value == '-')) {
+    return visitor.visit_number(*this, value);
+  }
+  // true, false, null are uncommon.
   switch (*value) {
-    case '"': return visitor.visit_string(*this, value);
     case 't': return visitor.visit_true_atom(*this, value);
     case 'f': return visitor.visit_false_atom(*this, value);
     case 'n': return visitor.visit_null_atom(*this, value);
-    case '-':
-    case '0': case '1': case '2': case '3': case '4':
-    case '5': case '6': case '7': case '8': case '9':
-      return visitor.visit_number(*this, value);
     default:
       log_error("Non-value found when value was expected!");
       return TAPE_ERROR;
@@ -315,3 +324,5 @@ simdjson_warn_unused simdjson_inline error_code json_iterator::visit_primitive(V
 } // unnamed namespace
 } // namespace SIMDJSON_IMPLEMENTATION
 } // namespace simdjson
+
+#endif // SIMDJSON_SRC_GENERIC_STAGE2_JSON_ITERATOR_H

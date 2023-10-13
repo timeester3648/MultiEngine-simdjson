@@ -14,5 +14,7 @@ project "simdjson"
 	}
 
 	includedirs {
+		"./src",
+
 		"%{IncludeDir.simdjson}"
 	}

@@ -101,6 +101,21 @@ public:
    */
   simdjson_inline simdjson_result<std::string_view> get_string(bool allow_replacement = false) noexcept;
   /**
+   * Attempts to fill the provided std::string reference with the parsed value of the current string.
+   *
+   * The string is guaranteed to be valid UTF-8.
+   *
+   * Important: a value should be consumed once. Calling get_string() twice on the same value
+   * is an error.
+   *
+   * Performance: This method may be slower than get_string() or get_string(bool) because it may need to allocate memory.
+   * We recommend you avoid allocating an std::string unless you need to.
+   *
+   * @returns INCORRECT_TYPE if the JSON value is not a string. Otherwise, we return SUCCESS.
+   */
+  template <typename string_type>
+  simdjson_inline error_code get_string(string_type& receiver, bool allow_replacement = false) noexcept;
+  /**
    * Cast this JSON value to a string.
    *
    * The string is not guaranteed to be valid UTF-8. See https://simonsapin.github.io/wtf-8/
@@ -131,6 +146,12 @@ public:
   /**
    * Cast this JSON value to a value when the document is an object or an array.
    *
+   * You must not have begun iterating through the object or array. When
+   * SIMDJSON_DEVELOPMENT_CHECKS is set to 1 (which is the case when building in Debug mode
+   * by default), and you have already begun iterating,
+   * you will get an OUT_OF_ORDER_ITERATION error. If you have begun iterating, you can use
+   * rewind() to reset the document to its initial state before calling this method.
+   *
    * @returns A value if a JSON array or object cannot be found.
    * @returns SCALAR_DOCUMENT_AS_VALUE error is the document is a scalar (see is_scalar() function).
    */
@@ -160,13 +181,19 @@ public:
   template<typename T> simdjson_inline simdjson_result<T> get() & noexcept {
     // Unless the simdjson library provides an inline implementation, calling this method should
     // immediately fail.
-    static_assert(!sizeof(T), "The get method with given type is not implemented by the simdjson library.");
+    static_assert(!sizeof(T), "The get method with given type is not implemented by the simdjson library. "
+      "The supported types are ondemand::object, ondemand::array, raw_json_string, std::string_view, uint64_t, "
+      "int64_t, double, and bool. We recommend you use get_double(), get_bool(), get_uint64(), get_int64(), "
+      " get_object(), get_array(), get_raw_json_string(), or get_string() instead of the get template.");
   }
   /** @overload template<typename T> simdjson_result<T> get() & noexcept */
   template<typename T> simdjson_inline simdjson_result<T> get() && noexcept {
     // Unless the simdjson library provides an inline implementation, calling this method should
     // immediately fail.
-    static_assert(!sizeof(T), "The get method with given type is not implemented by the simdjson library.");
+    static_assert(!sizeof(T), "The get method with given type is not implemented by the simdjson library. "
+      "The supported types are ondemand::object, ondemand::array, raw_json_string, std::string_view, uint64_t, "
+      "int64_t, double, and bool. We recommend you use get_double(), get_bool(), get_uint64(), get_int64(), "
+      " get_object(), get_array(), get_raw_json_string(), or get_string() instead of the get template.");
   }
 
   /**
@@ -247,10 +274,15 @@ public:
    */
   simdjson_inline operator bool() noexcept(false);
   /**
-   * Cast this JSON value to a value.
+   * Cast this JSON value to a value when the document is an object or an array.
    *
-   * @returns A value value.
-   * @exception if a JSON value cannot be found
+   * You must not have begun iterating through the object or array. When
+   * SIMDJSON_DEVELOPMENT_CHECKS is defined, and you have already begun iterating,
+   * you will get an OUT_OF_ORDER_ITERATION error. If you have begun iterating, you can use
+   * rewind() to reset the document to its initial state before calling this method.
+   *
+   * @returns A value value if a JSON array or object cannot be found.
+   * @exception SCALAR_DOCUMENT_AS_VALUE error is the document is a scalar (see is_scalar() function).
    */
   simdjson_inline operator value() noexcept(false);
 #endif
@@ -618,6 +650,8 @@ public:
   simdjson_inline simdjson_result<double> get_double() noexcept;
   simdjson_inline simdjson_result<double> get_double_in_string() noexcept;
   simdjson_inline simdjson_result<std::string_view> get_string(bool allow_replacement = false) noexcept;
+  template <typename string_type>
+  simdjson_inline error_code get_string(string_type& receiver, bool allow_replacement = false) noexcept;
   simdjson_inline simdjson_result<std::string_view> get_wobbly_string() noexcept;
   simdjson_inline simdjson_result<raw_json_string> get_raw_json_string() noexcept;
   simdjson_inline simdjson_result<bool> get_bool() noexcept;
@@ -687,6 +721,8 @@ public:
   simdjson_inline simdjson_result<double> get_double() noexcept;
   simdjson_inline simdjson_result<double> get_double_in_string() noexcept;
   simdjson_inline simdjson_result<std::string_view> get_string(bool allow_replacement = false) noexcept;
+  template <typename string_type>
+  simdjson_inline error_code get_string(string_type& receiver, bool allow_replacement = false) noexcept;
   simdjson_inline simdjson_result<std::string_view> get_wobbly_string() noexcept;
   simdjson_inline simdjson_result<SIMDJSON_IMPLEMENTATION::ondemand::raw_json_string> get_raw_json_string() noexcept;
   simdjson_inline simdjson_result<bool> get_bool() noexcept;
@@ -759,6 +795,8 @@ public:
   simdjson_inline simdjson_result<double> get_double() noexcept;
   simdjson_inline simdjson_result<double> get_double_in_string() noexcept;
   simdjson_inline simdjson_result<std::string_view> get_string(bool allow_replacement = false) noexcept;
+  template <typename string_type>
+  simdjson_inline error_code get_string(string_type& receiver, bool allow_replacement = false) noexcept;
   simdjson_inline simdjson_result<std::string_view> get_wobbly_string() noexcept;
   simdjson_inline simdjson_result<SIMDJSON_IMPLEMENTATION::ondemand::raw_json_string> get_raw_json_string() noexcept;
   simdjson_inline simdjson_result<bool> get_bool() noexcept;

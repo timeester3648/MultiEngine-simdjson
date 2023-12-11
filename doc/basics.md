@@ -30,6 +30,7 @@ An overview of what you need to know to use simdjson, with examples.
   - [Dynamic Number Types](#dynamic-number-types)
   - [Raw Strings](#raw-strings)
   - [General Direct Access to the Raw JSON String](#general-direct-access-to-the-raw-json-string)
+  - [Storing Directly into an Existing String Instance](#storing-directly-into-an-existing-string-instance)
   - [Thread Safety](#thread-safety)
   - [Standard Compliance](#standard-compliance)
   - [Backwards Compatibility](#backwards-compatibility)
@@ -85,7 +86,7 @@ include(FetchContent)
 FetchContent_Declare(
   simdjson
   GIT_REPOSITORY https://github.com/simdjson/simdjson.git
-  GIT_TAG  tags/v0.9.6
+  GIT_TAG  tags/v3.6.0
   GIT_SHALLOW TRUE)
 
 FetchContent_MakeAvailable(simdjson)
@@ -179,8 +180,8 @@ strcpy(json, "[1]");
 ondemand::document doc = parser.iterate(json, strlen(json), sizeof(json));
 ```
 
-The simdjson library will also accept `std::string` instances, as long as the `capacity()` of
-the string exceeds the `size()` by at least `SIMDJSON_PADDING`. You can increase the `capacity()` with the `reserve()` function of your strings.
+The simdjson library will also accept `std::string` instances. If the provided
+reference is non-const, it will allocate padding as needed.
 
 You can copy your data directly on a `simdjson::padded_string` as follows:
 
@@ -218,7 +219,8 @@ This means that while you iterate an array, or search for a field in an object, 
 walking through the original JSON text, merrily reading commas and colons and brackets to make sure
 you get where you are going. This is the key to On Demand's performance: since it's just an iterator,
 it lets you parse values as you use them. And particularly, it lets you *skip* values you do not want
-to use.
+to use. On Demand is also ideally suited when you want to capture part of the document without parsing it
+immediately (e.g., see [Raw Strings](#raw-strings)).
 
 We refer to "On Demand" as a front-end component since it is an interface between the
 low-level parsing functions and the user. It hides much of the complexity of parsing JSON
@@ -253,7 +255,8 @@ copy the data into their own favorite class instances (e.g., alternatives to `st
 
 A `std::string_view` instance is effectively just a pointer to a region in memory representing
 a string. In simdjson, we return `std::string_view` instances that either point within the
-input string you parsed, or to a temporary string buffer inside our parser class instances.
+input string you parsed (when using [raw Strings](#raw-strings)), or to a temporary string buffer inside
+our parser class instances that is valid until the parser object is destroyed or you use it to parse another document.
 When using `std::string_view` instances, it is your responsibility to ensure that
 `std::string_view` instance does not outlive the pointed-to memory (e.g., either the input
 buffer or the parser instance). Furthermore, some operations reset the string buffer
@@ -261,6 +264,7 @@ inside our parser instances: e.g., when we parse a new document. Thus a `std::st
 is often best viewed as a temporary string value that is tied to the document you are parsing.
 At the cost of some memory allocation, you may convert your `std::string_view` instances for long-term storage into `std::string` instances:
 `std::string mycopy(view)` (C++17) or  `std::string mycopy(view.begin(), view.end())` (prior to C++17).
+For convenience, we also allow [storing an escaped string directly into an existing string instance](#storing-directly-into-an-existing-string-instance).
 
 The `std::string_view` class has become standard as part of C++17 but it is not always available
 on compilers which only supports C++11. When we detect that `string_view` is natively
@@ -355,7 +359,7 @@ support for users who avoid exceptions. See [the simdjson error handling documen
 * **Field Access:** To get the value of the "foo" field in an object, use `object["foo"]`. This will
   scan through the object looking for the field with the matching string, doing a character-by-character
   comparison. It may generate the error `simdjson::NO_SUCH_FIELD` if there is no such key in the object, it may throw an exception (see [Error Handling](#error-handling)). For efficiency reason, you should avoid looking up the same field repeatedly: e.g., do
-  not do `object["foo"]` followed by `object["foo"]` with the same `object` instance. Keep in mind that On Demand does not buffer or save the result of the parsing: if you repeatedly access `object["foo"]`, then it must repeatedly seek the key and parse the content. The library does not provide a distinct function to check if a key is present, instead we recommend you attempt to access the key: e.g., by doing `ondemand::value val{}; if (!object["foo"].get(val)) {...}`, you have that `val` contains the requested value inside the if clause.  It is your responsibility as a user to temporarily keep a reference to the value (`auto v = object["foo"]`), or to consume the content and store it in your own data structures. If you consume an
+  not do `object["foo"]` followed by `object["foo"]` with the same `object` instance. For best performance, you should try to query the keys in the same order they appear in the document. If you need several keys and you cannot predict the order they will appear in, it is recommended to iterate through all keys `for(auto field : object) {...}`.  Keep in mind that On Demand does not buffer or save the result of the parsing: if you repeatedly access `object["foo"]`, then it must repeatedly seek the key and parse the content. The library does not provide a distinct function to check if a key is present, instead we recommend you attempt to access the key: e.g., by doing `ondemand::value val{}; if (!object["foo"].get(val)) {...}`, you have that `val` contains the requested value inside the if clause.  It is your responsibility as a user to temporarily keep a reference to the value (`auto v = object["foo"]`), or to consume the content and store it in your own data structures. If you consume an
   object twice: `std::string_view(object["foo"]` followed by `std::string_view(object["foo"]` then your code
   is in error. Furthermore, you can only consume one field at a time, on the same object. The
   value instance you get from  `content["bids"]` becomes invalid when you call `content["asks"]`.
@@ -541,9 +545,7 @@ support for users who avoid exceptions. See [the simdjson error handling documen
 * **Tree Walking and JSON Element Types:** Sometimes you don't necessarily have a document
   with a known type, and are trying to generically inspect or walk over JSON elements.
   You can also represent arbitrary JSON values with
-  `ondemand::value` instances: it can represent anything except a scalar document (lone number, string, null or Boolean). You can check for scalar documents with the method `scalar()`.
-  You can query the type of a document or a value with the `type()` method.
-  The `type()` method does not consume or validate documents and values, but it tells you whether they are
+  `ondemand::value` instances: it can represent anything except a scalar document (lone number, string, null or Boolean). You can check for scalar documents with the method `scalar()`. You can cast a document that is either an array or an object to an `ondemand::value` instance immediately after you create the document instance: you cannot create a `ondemand::value` instance from a document that has already been accessed as it would mean that you would have two instances of the object or array simultaneously (see [rewinding](#rewinding)). You can query the type of a document or a value with the `type()` method. The `type()` method does not consume or validate documents and values, but it tells you whether they are
   - arrays (`json_type::array`),
   - objects (`json_type::object`)
   - numbers (`json_type::number`),
@@ -1653,7 +1655,7 @@ JSON string to a user-provided buffer:
 
 General Direct Access to the Raw JSON String
 --------------------------------
-If your value is a string, the `raw_json_string` gives you direct access to the unprocess
+If your value is a string, the `raw_json_string` you with `get_raw_json_string()` gives you direct access to the unprocessed
 string. The simdjson library allows you to have access to the raw underlying JSON
 more generally.
 
@@ -1688,9 +1690,9 @@ string_view token = obj["value"].raw_json_token();
 
 The `raw_json_token()` should be fast and free of allocation.
 
-If you value is an array or an object, `raw_json_token()` returns effectively a single
+If your value is an array or an object, `raw_json_token()` returns effectively a single
 character (`[`) or (`}`) which is not very useful. For arrays and objects, we have another
-method called `raw_json()` which consumes (traverse) the array or the object.
+method called `raw_json()` which consumes (traverses) the array or the object.
 
 ```C++
 simdjson::ondemand::parser parser;
@@ -1721,6 +1723,82 @@ string_view token = obj.raw_json(); // gives you `{"value":123}`
 obj.reset(); // revise the object
 uint64_t x = obj["value"]; // gives me 123
 ```
+
+You can use `raw_json()` with the values inside an array and object. When
+calling `raw_json()` on an untyped value, it acts as `raw_json()` when the
+value is an array or an object. Otherwise, it acts as `raw_json_token()`.
+It is useful if you do not care for the type of the value and just wants a
+string representation.
+
+```C++
+  auto json = R"( [1,2,"fds", {"a":1}, [1,344]] )"_padded;
+  ondemand::parser parser;
+  ondemand::document doc = parser.iterate(json);
+  size_t counter = 0;
+  for(auto array: doc) {
+    std::string_view raw = array.raw_json();
+    // will capture "1", "2", "\"fds\"", "{\"a\":1}", "[1,344]"
+  }
+```
+
+```C++
+  auto json = R"( {"key1":1,"key2":2,"key3":"fds", "key4":{"a":1}, "key5":[1,344]} )"_padded;
+  ondemand::parser parser;
+  ondemand::document doc = parser.iterate(json);
+  size_t counter = 0;
+  for(auto key_value: doc.get_object()) {
+    std::string_view raw = key_value.value().raw_json();
+    // will capture "1", "2", "\"fds\"", "{\"a\":1}", "[1,344]"
+  }
+```
+
+
+Storing Directly into an Existing String Instance
+-----------------------------------------------------
+
+The simdjson library favours  the use of `std::string_view` instances because
+it tends to lead to better performance due to causing fewer memory allocations.
+However, they are cases where you need to store a string result in an `std::string``
+instance. You can do so with a templated version of the `to_string()` method which takes as
+a parameter a reference to an `std::string`.
+
+```C++
+  auto json = R"({
+  "name": "Daniel",
+  "age": 42
+})"_padded;
+  ondemand::parser parser;
+  ondemand::document doc = parser.iterate(json);
+  std::string name;
+  doc["name"].get_string(name);
+```
+
+The same routine can be written without exceptions handling:
+
+```C++
+  std::string name;
+  auto err = doc["name"].get_string(name);
+  if(err) { /* handle error */ }
+```
+
+The `std::string` instance, once created, is independent. Unlike our `std::string_view` instances,
+it does not point at data that is within our `parser` instance. The same caveat applies: you should
+only consume a JSON string once.
+
+Because `get_string()` is a template that requires a type that can be assigned an `std::string`, you
+can use it with features such as `std::optional`:
+
+```C++
+  auto json = R"({ "foo1": "3.1416" } )"_padded;
+  ondemand::parser parser;
+  ondemand::document doc = parser.iterate(json);
+  std::optional<std::string> value;
+  if(doc["foo1"].get_string(value)) { /* error */ }
+  // value was populated with "3.1416"
+```
+
+You should be mindful of the trade-off: allocating multiple
+`std::string` instances can become expensive.
 
 Thread Safety
 -------------

@@ -132,6 +132,7 @@ $(document).ready(function(){initNavTree('md_doc_basics.html',''); initResizable
 <li><a href="#backwards-compatibility">Backwards Compatibility</a></li>
 <li><a href="#examples">Examples</a></li>
 <li><a href="#performance-tips">Performance Tips</a></li>
+<li><a href="#further-reading">Further Reading</a></li>
 </ul>
 </li>
 </ul>
@@ -1185,7 +1186,7 @@ Raw Strings</h1>
 <div class="line">   }</div>
 </div><!-- fragment --><h1><a class="anchor" id="autotoc_md25"></a>
 General Direct Access to the Raw JSON String</h1>
-<p>If your value is a string, the <code>raw_json_string</code> you with <code>get_raw_json_string()</code> gives you direct access to the unprocessed string. The simdjson library allows you to have access to the raw underlying JSON more generally.</p>
+<p>If your value is a string, the <code>raw_json_string</code> you with <code>get_raw_json_string()</code> gives you direct access to the unprocessed string. But the simdjson library allows you to have access to the raw underlying JSON more generally, not just for strings.</p>
 <p>The simdjson library makes explicit assumptions about types. For examples, numbers must be integers (up to 64-bit integers) or binary64 floating-point numbers. Some users have different needs. For example, some users might want to support big integers. The library makes this possible by providing a <code>raw_json_token</code> method which returns a <code>std::string_view</code> instance containing the value as a string which you may then parse as you see fit.</p>
 <div class="fragment"><div class="line"> {C++}</div>
 <div class="line">simdjson::ondemand::parser parser;</div>
@@ -1567,7 +1568,12 @@ Performance Tips</h1>
 <div class="line">  std::string_view year = data[&quot;year&quot;];</div>
 <div class="line">  std::string_view rating = data[&quot;rating&quot;];</div>
 </div><!-- fragment --></li>
-<li>To better understand the operation of your On Demand parser, and whether it is performing as well as you think it should be, there is a logger feature built in to simdjson! To use it, define the pre-processor directive <code>SIMDJSON_VERBOSE_LOGGING</code> prior to including the <code><a class="el" href="simdjson_8h.html">simdjson.h</a></code> header, which enables logging in simdjson. Run your code. It may generate a lot of logging output; adding printouts from your application that show each section may be helpful. The log's output will show step-by-step information on state, buffer pointer position, depth, and key retrieval status. Importantly, unless <code>SIMDJSON_VERBOSE_LOGGING</code> is defined, logging is entirely disabled and thus carries no overhead. </li>
+<li>To better understand the operation of your On Demand parser, and whether it is performing as well as you think it should be, there is a logger feature built in to simdjson! To use it, define the pre-processor directive <code>SIMDJSON_VERBOSE_LOGGING</code> prior to including the <code><a class="el" href="simdjson_8h.html">simdjson.h</a></code> header, which enables logging in simdjson. Run your code. It may generate a lot of logging output; adding printouts from your application that show each section may be helpful. The log's output will show step-by-step information on state, buffer pointer position, depth, and key retrieval status. Importantly, unless <code>SIMDJSON_VERBOSE_LOGGING</code> is defined, logging is entirely disabled and thus carries no overhead.</li>
+</ul>
+<h1><a class="anchor" id="autotoc_md32"></a>
+Further reading</h1>
+<ul>
+<li>John Keiser, Daniel Lemire, <a href="http://arxiv.org/abs/2312.17149">On-Demand JSON: A Better Way to Parse Documents?</a>, Software: Practice and Experience (to appear) </li>
 </ul>
 </div></div><!-- contents -->
 </div><!-- PageDoc -->

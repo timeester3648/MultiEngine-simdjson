@@ -183,7 +183,7 @@ simdjson_inline size_t trim_partial_utf8(const uint8_t *buf, size_t len) {
 //    up enough CPU: the second half of the functions is highly serial, only using 1 execution core
 //    at a time. The second input's scans has some dependency on the first ones finishing it, but
 //    they can make a lot of progress before they need that information.
-// 3. Step 1 doesn't use enough capacity, so we run some extra stuff while we're waiting for that
+// 3. Step 1 does not use enough capacity, so we run some extra stuff while we're waiting for that
 //    to finish: utf-8 checks and generating the output from the last iteration.
 //
 // The reason we run 2 inputs at a time, is steps 2 and 3 are *still* not enough to soak up all
@@ -263,7 +263,7 @@ simdjson_inline error_code json_structural_indexer::finish(dom_parser_implementa
   }
   parser.n_structural_indexes = uint32_t(indexer.tail - parser.structural_indexes.get());
   /***
-   * The On Demand API requires special padding.
+   * The On-Demand API requires special padding.
    *
    * This is related to https://github.com/simdjson/simdjson/issues/906
    * Basically, we want to make sure that if the parsing continues beyond the last (valid)

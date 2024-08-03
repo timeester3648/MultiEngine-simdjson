@@ -10,6 +10,7 @@
 #include <sstream>
 #include <utility>
 #include <unistd.h>
+using namespace std::string_literals;
 
 #include "simdjson.h"
 #include "cast_tester.h"
@@ -37,6 +38,25 @@ const size_t AMAZON_CELLPHONES_NDJSON_DOC_COUNT = 793;
 
 namespace number_tests {
 
+  bool build(const std::string& json) {
+    simdjson::dom::parser parser;
+    simdjson::dom::element recvdJson;
+    auto error = parser.parse(json.c_str(), json.size()).get(recvdJson);
+    if (error) {
+        return false;
+    }
+    return true;
+  }
+  bool issue2213() {
+    TEST_START();
+    std::string jsonStr = "[1,2,3,\"4\", {\"a\": 5}]";
+    for (int i = 0; i < 15; ++i) {
+        if (!build(jsonStr)) {
+          TEST_FAIL("The JSON is valid");
+        }
+    }
+    TEST_SUCCEED();
+  }
   bool ground_truth() {
     std::cout << __func__ << std::endl;
     std::pair<std::string,double> ground_truth[] = {
@@ -396,7 +416,8 @@ namespace number_tests {
   }
 
   bool run() {
-    return bomskip() &&
+    return issue2213() &&
+           bomskip() &&
            issue2017() &&
            truncated_borderline() &&
            specific_tests() &&
@@ -912,6 +933,73 @@ namespace dom_api_tests {
     return true;
   }
 
+  bool object_iterator_advance() {
+    std::cout << "Running " << __func__ << std::endl;
+    string json(R"({ "a": 1, "b": 2, "c": 3 })");
+    const char* expected_key[] = { "a", "b", "c" };
+    uint64_t expected_value[] = { 1, 2, 3 };
+
+    dom::parser parser;
+    dom::object object;
+    ASSERT_SUCCESS( parser.parse(json).get(object) );
+    auto iter = object.begin();
+    for (auto i = 0; i * sizeof(expected_value[0]) < sizeof(expected_value); i++) {
+      auto [key, value] = *iter;
+      ASSERT_EQUAL( key, expected_key[i] );
+      ASSERT_EQUAL( value.get_uint64().value_unsafe(), expected_value[i] );
+      std::advance( iter, 1 );
+    }
+    return true;
+  }
+
+  bool array_iterator_advance() {
+    std::cout << "Running " << __func__ << std::endl;
+    string json(R"([ 1, 10, 100 ])");
+    uint64_t expected_value[] = { 1, 10, 100 };
+
+    dom::parser parser;
+    dom::array array;
+    ASSERT_SUCCESS( parser.parse(json).get(array) );
+    auto iter = array.begin();
+    for (auto i = 0; i * sizeof(expected_value[0]) < sizeof(expected_value); i++) {
+      uint64_t v;
+      ASSERT_SUCCESS( (*iter).get(v) );
+      ASSERT_EQUAL( v, expected_value[i] );
+      std::advance( iter, 1 );
+    }
+    return true;
+  }
+
+  bool convert_object_to_element() {
+    std::cout << "Running " << __func__ << std::endl;
+    string json(R"({ "a": 1, "b": 2, "c": 3 })");
+
+    dom::parser parser;
+    dom::object object;
+    dom::element element;
+    ASSERT_SUCCESS( parser.parse(json).get(object) );
+    element = object;
+    ASSERT_EQUAL( element["a"].get_uint64().value_unsafe(), 1 );
+    ASSERT_EQUAL( element["b"].get_uint64().value_unsafe(), 2 );
+    ASSERT_EQUAL( element["c"].get_uint64().value_unsafe(), 3 );
+    return true;
+  }
+
+  bool convert_array_to_element() {
+    std::cout << "Running " << __func__ << std::endl;
+    string json(R"([ 1, 10, 100 ])");
+
+    dom::parser parser;
+    dom::array array;
+    dom::element element;
+    ASSERT_SUCCESS( parser.parse(json).get(array) );
+    element = array;
+    ASSERT_EQUAL( element.at(0).get_uint64().value_unsafe(), 1 );
+    ASSERT_EQUAL( element.at(1).get_uint64().value_unsafe(), 10 );
+    ASSERT_EQUAL( element.at(2).get_uint64().value_unsafe(), 100 );
+    return true;
+  }
+
   bool string_value() {
     std::cout << "Running " << __func__ << std::endl;
     string json(R"([ "hi", "has backslash\\" ])");
@@ -1291,6 +1379,10 @@ namespace dom_api_tests {
            array_iterator() &&
            object_iterator_empty() &&
            array_iterator_empty() &&
+           object_iterator_advance() &&
+           array_iterator_advance() &&
+           convert_object_to_element() &&
+           convert_array_to_element() &&
            string_value() &&
            numeric_values() &&
            boolean_values() &&
@@ -2240,14 +2332,14 @@ bool simple_overflows() {
   std::cout << "Running " << __func__ << std::endl;
   simdjson::dom::parser parser;
   simdjson::dom::element doc;
-  ASSERT_ERROR( parser.parse(std::string("[f]")).get(doc), simdjson::F_ATOM_ERROR);
-  ASSERT_ERROR( parser.parse(std::string("[t]")).get(doc), simdjson::T_ATOM_ERROR);
-  ASSERT_ERROR( parser.parse(std::string("[n]")).get(doc), simdjson::N_ATOM_ERROR);
-  ASSERT_ERROR( parser.parse(std::string("[-]")).get(doc), simdjson::NUMBER_ERROR);
-  ASSERT_ERROR( parser.parse(std::string("{\"a\":f}")).get(doc), simdjson::F_ATOM_ERROR);
-  ASSERT_ERROR( parser.parse(std::string("{\"a\":t}")).get(doc), simdjson::T_ATOM_ERROR);
-  ASSERT_ERROR( parser.parse(std::string("{\"a\":n}")).get(doc), simdjson::N_ATOM_ERROR);
-  ASSERT_ERROR( parser.parse(std::string("{\"a\":-}")).get(doc), simdjson::NUMBER_ERROR);
+  ASSERT_ERROR( parser.parse("[f]"s).get(doc), simdjson::F_ATOM_ERROR);
+  ASSERT_ERROR( parser.parse("[t]"s).get(doc), simdjson::T_ATOM_ERROR);
+  ASSERT_ERROR( parser.parse("[n]"s).get(doc), simdjson::N_ATOM_ERROR);
+  ASSERT_ERROR( parser.parse("[-]"s).get(doc), simdjson::NUMBER_ERROR);
+  ASSERT_ERROR( parser.parse("{\"a\":f}"s).get(doc), simdjson::F_ATOM_ERROR);
+  ASSERT_ERROR( parser.parse("{\"a\":t}"s).get(doc), simdjson::T_ATOM_ERROR);
+  ASSERT_ERROR( parser.parse("{\"a\":n}"s).get(doc), simdjson::N_ATOM_ERROR);
+  ASSERT_ERROR( parser.parse("{\"a\":-}"s).get(doc), simdjson::NUMBER_ERROR);
   return true;
 }
 

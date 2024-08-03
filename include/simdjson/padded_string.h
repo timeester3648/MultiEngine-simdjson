@@ -39,6 +39,9 @@ struct padded_string final {
    * @param length the number of bytes to copy
    */
   explicit inline padded_string(const char *data, size_t length) noexcept;
+#ifdef __cpp_char8_t
+  explicit inline padded_string(const char8_t *data, size_t length) noexcept;
+#endif
   /**
    * Create a new padded string by copying the given input.
    *
@@ -108,6 +111,15 @@ struct padded_string final {
   /**
    * Load this padded string from a file.
    *
+   * ## Windows and Unicode
+   *
+   * Windows users who need to read files with non-ANSI characters in the
+   * name should set their code page to UTF-8 (65001) before calling this
+   * function. This should be the default with Windows 11 and better.
+   * Further, they may use the AreFileApisANSI function to determine whether
+   * the filename is interpreted using the ANSI or the system default OEM
+   * codepage, and they may call SetFileApisToOEM accordingly.
+   *
    * @return IO_ERROR on error. Be mindful that on some 32-bit systems,
    * the file size might be limited to 2 GB.
    *
@@ -150,6 +162,9 @@ inline std::ostream& operator<<(std::ostream& out, simdjson_result<padded_string
 
 // This is deliberately outside of simdjson so that people get it without having to use the namespace
 inline simdjson::padded_string operator "" _padded(const char *str, size_t len);
+#ifdef __cpp_char8_t
+inline simdjson::padded_string operator "" _padded(const char8_t *str, size_t len);
+#endif
 
 namespace simdjson {
 namespace internal {

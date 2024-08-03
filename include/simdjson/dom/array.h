@@ -19,11 +19,14 @@ public:
   public:
     using value_type = element;
     using difference_type = std::ptrdiff_t;
+    using pointer = void;
+    using reference = value_type;
+    using iterator_category = std::forward_iterator_tag;
 
     /**
      * Get the actual value
      */
-    inline value_type operator*() const noexcept;
+    inline reference operator*() const noexcept;
     /**
      * Get the next value.
      *
@@ -122,6 +125,11 @@ public:
    *         - INDEX_OUT_OF_BOUNDS if the array index is larger than an array length
    */
   inline simdjson_result<element> at(size_t index) const noexcept;
+
+  /**
+   * Implicitly convert object to element
+   */
+  inline operator element() const noexcept;
 
 private:
   simdjson_inline array(const internal::tape_ref &tape) noexcept;

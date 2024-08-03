@@ -1,6 +1,7 @@
 #include "simdjson.h"
 #include "test_ondemand.h"
 #include <string>
+using namespace std::string_literals;
 
 using namespace simdjson;
 
@@ -195,7 +196,7 @@ namespace json_pointer_tests {
         ASSERT_SUCCESS(parser.iterate(cars_json).get(cars));
         for (int i = 0; i < 3; i++) {
             double x;
-            std::string json_pointer = std::string("/") + std::to_string(i) + std::string("/tire_pressure/1");
+            std::string json_pointer = "/"s + std::to_string(i) + "/tire_pressure/1"s;
             ASSERT_SUCCESS(cars.at_pointer(json_pointer).get(x));
             measured.push_back(x);
         }
@@ -315,7 +316,7 @@ namespace json_pointer_tests {
         std::vector<car_type> content;
         for (int i = 0; i < 3; i++) {
             ondemand::object obj;
-            std::string json_pointer = std::string("/") + std::to_string(i);
+            std::string json_pointer = "/"s + std::to_string(i);
             // Each successive at_pointer call invalidates
             // previously parsed values, strings, objects and array.
             ASSERT_SUCCESS(cars.at_pointer(json_pointer).get(obj));
@@ -360,7 +361,7 @@ namespace json_pointer_tests {
         ondemand::document cars = parser.iterate(cars_json);
         std::vector<car_type> content;
         for (int i = 0; i < 3; i++) {
-            std::string json_pointer = std::string("/") + std::to_string(i);
+            std::string json_pointer = "/"s + std::to_string(i);
             // Each successive at_pointer call invalidates
             // previously parsed values, strings, objects and array.
             ondemand::object obj(cars.at_pointer(json_pointer).get_object());
@@ -384,8 +385,38 @@ namespace json_pointer_tests {
         TEST_SUCCEED();
     }
 #endif
+
+    bool issue2154() { // mistakenly taking value as path should not raise INVALID_JSON_POINTER
+#if SIMDJSON_EXCEPTIONS
+      std::cout << "issue 2154" << std::endl;
+      auto example_json = R"__({
+            "obj": {
+                "s": "42",
+                "n": 42,
+                "f": 4.2
+            }
+        })__"_padded;
+        ondemand::parser parser;
+        ondemand::document doc;
+        ASSERT_SUCCESS(parser.iterate(example_json).get(doc));
+        std::string_view sfield = doc.at_pointer("/obj/s");
+        ASSERT_EQUAL(sfield, "42");
+        int64_t nfield = doc.at_pointer("/obj/n");
+        ASSERT_EQUAL(nfield, 42);
+        ASSERT_ERROR(doc.at_pointer("/obj/X/42").error(), NO_SUCH_FIELD);
+        ASSERT_ERROR(doc.at_pointer("/obj/s/42").error(), NO_SUCH_FIELD);
+        ASSERT_ERROR(doc.at_pointer("/obj/n/42").error(), NO_SUCH_FIELD);
+        ASSERT_ERROR(doc.at_pointer("/obj/f/4.2").error(), NO_SUCH_FIELD);
+        ASSERT_ERROR(doc.at_pointer("/obj/f/4~").error(), INVALID_JSON_POINTER);
+        ASSERT_ERROR(doc.at_pointer("/obj/f/~").error(), INVALID_JSON_POINTER);
+        ASSERT_ERROR(doc.at_pointer("/obj/f/~1").error(), NO_SUCH_FIELD);
+#endif
+      return true;
+    }
+
     bool run() {
         return
+                issue2154() &&
 #if SIMDJSON_EXCEPTIONS
                 json_pointer_invalidation_exceptions() &&
 #endif

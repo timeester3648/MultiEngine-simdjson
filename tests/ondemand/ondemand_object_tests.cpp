@@ -356,7 +356,7 @@ namespace object_tests {
   // used in issue_1521
   // difficult to use as a lambda because it is recursive.
   void broken_descend(ondemand::object node) {
-    if(auto type = node.find_field_unordered("type"); type.error() == SUCCESS && type == "child") {
+    if(auto type = node.find_field_unordered("type"); type.error() == SUCCESS && type.get_string().value() == "child") {
       auto n = node.find_field_unordered("name");
       if(n.error() == simdjson::SUCCESS) {
           std::cout << std::string_view(n) << std::endl;
@@ -399,7 +399,7 @@ namespace object_tests {
   // difficult to use as a lambda because it is recursive.
   void descend(ondemand::object node) {
     auto n = node.find_field_unordered("name");
-    if(auto type = node.find_field_unordered("type"); type.error() == SUCCESS && type == "child") {
+    if(auto type = node.find_field_unordered("type"); type.error() == SUCCESS && type.get_string().value() == "child") {
       if(n.error() == simdjson::SUCCESS) {
           std::cout << std::string_view(n) << std::endl;
       }
@@ -691,6 +691,22 @@ namespace object_tests {
       for (auto field : object) {
         std::string_view keyv;
         ASSERT_SUCCESS( field.unescaped_key().get(keyv) );
+        if(keyv == "key") {
+          int64_t value;
+          ASSERT_SUCCESS( field.value().get(value) );
+          ASSERT_EQUAL( value, 1);
+          got_key = true;
+        }
+      }
+      return got_key;
+    }));
+    SUBTEST("ondemand::unescapedkey(std)", test_ondemand_doc(json, [&](auto doc_result) {
+      ondemand::object object;
+      bool got_key = false;
+      ASSERT_SUCCESS( doc_result.get(object) );
+      for (auto field : object) {
+        std::string keyv;
+        ASSERT_SUCCESS( field.unescaped_key(keyv) );
         if(keyv == "key") {
           int64_t value;
           ASSERT_SUCCESS( field.value().get(value) );

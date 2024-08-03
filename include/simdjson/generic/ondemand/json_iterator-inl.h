@@ -54,6 +54,23 @@ simdjson_inline json_iterator::json_iterator(const uint8_t *buf, ondemand::parse
 #endif
 }
 
+#ifdef SIMDJSON_EXPERIMENTAL_ALLOW_INCOMPLETE_JSON
+simdjson_inline json_iterator::json_iterator(const uint8_t *buf, ondemand::parser *_parser, bool streaming) noexcept
+    : token(buf, &_parser->implementation->structural_indexes[0]),
+      parser{_parser},
+      _string_buf_loc{parser->string_buf.get()},
+      _depth{1},
+      _root{parser->implementation->structural_indexes.get()},
+      _streaming{streaming}
+
+{
+  logger::log_headers();
+#if SIMDJSON_CHECK_EOF
+  assert_more_tokens();
+#endif
+}
+#endif // SIMDJSON_EXPERIMENTAL_ALLOW_INCOMPLETE_JSON
+
 inline void json_iterator::rewind() noexcept {
   token.set_position( root_position() );
   logger::log_headers(); // We start again
@@ -286,6 +303,12 @@ simdjson_inline uint32_t json_iterator::peek_length(token_position position) con
 #endif // SIMDJSON_CHECK_EOF
   return token.peek_length(position);
 }
+simdjson_inline uint32_t json_iterator::peek_root_length(token_position position) const noexcept {
+#if SIMDJSON_CHECK_EOF
+  assert_valid_position(position);
+#endif // SIMDJSON_CHECK_EOF
+  return token.peek_root_length(position);
+}
 
 simdjson_inline token_position json_iterator::last_position() const noexcept {
   // The following line fails under some compilers...
@@ -331,11 +354,23 @@ simdjson_inline token_position json_iterator::position() const noexcept {
 }
 
 simdjson_inline simdjson_result<std::string_view> json_iterator::unescape(raw_json_string in, bool allow_replacement) noexcept {
+#if SIMDJSON_DEVELOPMENT_CHECKS
+  auto result = parser->unescape(in, _string_buf_loc, allow_replacement);
+  SIMDJSON_ASSUME(!parser->string_buffer_overflow(_string_buf_loc));
+  return result;
+#else
   return parser->unescape(in, _string_buf_loc, allow_replacement);
+#endif
 }
 
 simdjson_inline simdjson_result<std::string_view> json_iterator::unescape_wobbly(raw_json_string in) noexcept {
+#if SIMDJSON_DEVELOPMENT_CHECKS
+  auto result = parser->unescape_wobbly(in, _string_buf_loc);
+  SIMDJSON_ASSUME(!parser->string_buffer_overflow(_string_buf_loc));
+  return result;
+#else
   return parser->unescape_wobbly(in, _string_buf_loc);
+#endif
 }
 
 simdjson_inline void json_iterator::reenter_child(token_position position, depth_t child_depth) noexcept {

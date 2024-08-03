@@ -46,6 +46,7 @@ Real-world usage
 - [Meta Velox](https://velox-lib.io)
 - [Google Pax](https://github.com/google/paxml)
 - [milvus](https://github.com/milvus-io/milvus)
+- [QuestDB](https://questdb.io/blog/questdb-release-8-0-3/)
 - [Clang Build Analyzer](https://github.com/aras-p/ClangBuildAnalyzer)
 - [Shopify HeapProfiler](https://github.com/Shopify/heap-profiler)
 - [StarRocks](https://github.com/StarRocks/starrocks)
@@ -59,6 +60,7 @@ Real-world usage
 - [vast](https://github.com/tenzir/vast)
 - [ada-url](https://github.com/ada-url/ada)
 - [fastgron](https://github.com/adamritter/fastgron)
+- [WasmEdge](https://wasmedge.org)
 
 If you are planning to use simdjson in a product, please work from one of our releases.
 
@@ -168,7 +170,8 @@ We distinguish between "bindings" (which just wrap the C++ code) and a port to a
 - [simdjzon](https://github.com/travisstaloch/simdjzon): zig port.
 - [JSON-Simd](https://github.com/rawleyfowler/JSON-simd): Raku bindings.
 - [JSON::SIMD](https://metacpan.org/pod/JSON::SIMD): Perl bindings; fully-featured JSON module that uses simdjson for decoding.
-- [gemmaJSON](https://github.com/sainttttt/gemmaJSON): Nim json parser based on simdjson bindings.
+- [gemmaJSON](https://github.com/sainttttt/gemmaJSON): Nim JSON parser based on simdjson bindings.
+- [simdjson-java](https://github.com/simdjson/simdjson-java): Java port.
 
 About simdjson
 --------------
@@ -177,9 +180,9 @@ The simdjson library takes advantage of modern microarchitectures, parallelizing
 instructions, reducing branch misprediction, and reducing data dependency to take advantage of each
 CPU's multiple execution cores.
 
-Our default front-end is called On Demand, and we wrote a paper about it:
+Our default front-end is called On-Demand, and we wrote a paper about it:
 
-- John Keiser, Daniel Lemire, [On-Demand JSON: A Better Way to Parse Documents?](http://arxiv.org/abs/2312.17149), Software: Practice and Experience (to appear)
+- John Keiser, Daniel Lemire, [On-Demand JSON: A Better Way to Parse Documents?](http://arxiv.org/abs/2312.17149), Software: Practice and Experience 54 (6), 2024.
 
 Some people [enjoy reading the first (2019) simdjson paper](https://arxiv.org/abs/1902.08318): A description of the design
 and implementation of simdjson is in our research article:

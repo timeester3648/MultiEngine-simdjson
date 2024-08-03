@@ -11,6 +11,9 @@
 #include <strings.h>
 #endif
 
+// We are using size_t without namespace std:: throughout the project
+using std::size_t;
+
 #ifdef _MSC_VER
 #define SIMDJSON_VISUAL_STUDIO 1
 /**
@@ -32,12 +35,14 @@
 #endif // __clang__
 #endif // _MSC_VER
 
-#if defined(__x86_64__) || defined(_M_AMD64)
+#if (defined(__x86_64__) || defined(_M_AMD64)) && !defined(_M_ARM64EC)
 #define SIMDJSON_IS_X86_64 1
-#elif defined(__aarch64__) || defined(_M_ARM64)
+#elif defined(__aarch64__) || defined(_M_ARM64) || defined(_M_ARM64EC)
 #define SIMDJSON_IS_ARM64 1
 #elif defined(__riscv) && __riscv_xlen == 64
 #define SIMDJSON_IS_RISCV64 1
+#elif defined(__loongarch_lp64)
+#define SIMDJSON_IS_LOONGARCH64 1
 #elif defined(__PPC64__) || defined(_M_PPC64)
 #if defined(__ALTIVEC__)
 #define SIMDJSON_IS_PPC64_VMX 1
@@ -146,6 +151,11 @@
 #define SIMDJSON_NO_SANITIZE_UNDEFINED
 #endif
 
+#if defined(__clang__) || defined(__GNUC__)
+#define simdjson_pure [[gnu::pure]]
+#else
+#define simdjson_pure
+#endif
 
 #if defined(__clang__) || defined(__GNUC__)
 #if defined(__has_feature)

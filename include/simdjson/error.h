@@ -27,6 +27,7 @@ enum error_code {
   F_ATOM_ERROR,               ///< Problem while parsing an atom starting with the letter 'f'
   N_ATOM_ERROR,               ///< Problem while parsing an atom starting with the letter 'n'
   NUMBER_ERROR,               ///< Problem while parsing a number
+  BIGINT_ERROR,               ///< The integer value exceeds 64 bits
   UTF8_ERROR,                 ///< the input is not valid UTF-8
   UNINITIALIZED,              ///< unknown error, or uninitialized document
   EMPTY,                      ///< no structural element found
@@ -38,7 +39,7 @@ enum error_code {
   INDEX_OUT_OF_BOUNDS,        ///< JSON array index too large
   NO_SUCH_FIELD,              ///< JSON field not found in object
   IO_ERROR,                   ///< Error reading a file
-  INVALID_JSON_POINTER,       ///< Invalid JSON pointer reference
+  INVALID_JSON_POINTER,       ///< Invalid JSON pointer syntax
   INVALID_URI_FRAGMENT,       ///< Invalid URI fragment
   UNEXPECTED_ERROR,           ///< indicative of a bug in simdjson
   PARSER_IN_USE,              ///< parser is already in use.

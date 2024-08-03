@@ -342,9 +342,18 @@ simdjson_inline std::string_view document_stream::iterator::source() const noexc
         depth--;
         break;
       default:    // Scalar value document
-        // TODO: Remove any trailing whitespaces
+        // TODO: We could remove trailing whitespaces
         // This returns a string spanning from start of value to the beginning of the next document (excluded)
-        return std::string_view(reinterpret_cast<const char*>(stream->buf) + current_index(), stream->parser->implementation->structural_indexes[++cur_struct_index] - current_index() - 1);
+        {
+          auto next_index = stream->parser->implementation->structural_indexes[++cur_struct_index];
+          // normally the length would be next_index - current_index() - 1, except for the last document
+          size_t svlen = next_index - current_index();
+          const char *start = reinterpret_cast<const char*>(stream->buf) + current_index();
+          while(svlen > 1 && (std::isspace(start[svlen-1]) || start[svlen-1] == '\0')) {
+            svlen--;
+          }
+          return std::string_view(start, svlen);
+        }
     }
     cur_struct_index++;
   }

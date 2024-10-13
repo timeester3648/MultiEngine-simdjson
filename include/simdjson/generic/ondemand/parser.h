@@ -278,8 +278,12 @@ public:
    * behavior of the parser for future operations.
    */
   bool threaded{true};
+  #else
+  /**
+   * When SIMDJSON_THREADS_ENABLED is not defined, the parser instance cannot use threads.
+   */
+  bool threaded{false};
   #endif
-
   /**
    * Unescape this JSON string, replacing \\ with \, \n with newline, etc. to a user-provided buffer.
    * The result must be valid UTF-8.
@@ -340,7 +344,7 @@ public:
 
 private:
   /** @private [for benchmarking access] The implementation to use */
-  std::unique_ptr<internal::dom_parser_implementation> implementation{};
+  std::unique_ptr<simdjson::internal::dom_parser_implementation> implementation{};
   size_t _capacity{0};
   size_t _max_capacity;
   size_t _max_depth{DEFAULT_MAX_DEPTH};

@@ -188,7 +188,7 @@ public:
       " You may also add support for custom types, see our documentation.");
   }
   /** @overload template<typename T> simdjson_result<T> get() & noexcept */
-  template<typename T> simdjson_inline simdjson_result<T> get() && noexcept {
+  template<typename T> simdjson_deprecated simdjson_inline simdjson_result<T> get() && noexcept {
     // Unless the simdjson library or the user provides an inline implementation, calling this method should
     // immediately fail.
     static_assert(!sizeof(T), "The get method with given type is not implemented by the simdjson library. "
@@ -211,7 +211,7 @@ public:
    */
   template<typename T> simdjson_inline error_code get(T &out) & noexcept;
   /** @overload template<typename T> error_code get(T &out) & noexcept */
-  template<typename T> simdjson_inline error_code get(T &out) && noexcept;
+  template<typename T> simdjson_deprecated simdjson_inline error_code get(T &out) && noexcept;
 
 #if SIMDJSON_EXCEPTIONS
   /**
@@ -224,7 +224,10 @@ public:
    * @returns An instance of type T
    */
   template <class T>
-  explicit simdjson_inline operator T() noexcept(false);
+  explicit simdjson_inline operator T() & noexcept(false);
+  template <class T>
+  explicit simdjson_deprecated simdjson_inline operator T() && noexcept(false);
+
   /**
    * Cast this JSON value to an array.
    *
@@ -688,6 +691,11 @@ protected:
 
 /**
  * A document_reference is a thin wrapper around a document reference instance.
+ * The document_reference instances are used primarily/solely for streams of JSON
+ * documents. They differ from document instances when parsing a scalar value
+ * (a document that is not an array or an object). In the case of a document,
+ * we expect the document to be fully consumed. In the case of a document_reference,
+ * we allow trailing content.
  */
 class document_reference {
 public:
@@ -790,7 +798,7 @@ public:
   simdjson_inline simdjson_result<bool> is_null() noexcept;
 
   template<typename T> simdjson_inline simdjson_result<T> get() & noexcept;
-  template<typename T> simdjson_inline simdjson_result<T> get() && noexcept;
+  template<typename T> simdjson_deprecated simdjson_inline simdjson_result<T> get() && noexcept;
 
   template<typename T> simdjson_inline error_code get(T &out) & noexcept;
   template<typename T> simdjson_inline error_code get(T &out) && noexcept;

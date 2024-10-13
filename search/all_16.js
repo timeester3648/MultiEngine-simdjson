@@ -1,4 +1,25 @@
 var searchData=
 [
-  ['_7eparser_304',['~parser',['../classsimdjson_1_1dom_1_1parser.html#aeb48211f320af02b58dc3d0505059844',1,'simdjson::dom::parser::~parser()'],['../classsimdjson_1_1_s_i_m_d_j_s_o_n___i_m_p_l_e_m_e_n_t_a_t_i_o_n_1_1ondemand_1_1parser.html#a4a144d96ad06a2295137dd0e5b7dcc1d',1,'simdjson::SIMDJSON_IMPLEMENTATION::ondemand::parser::~parser()']]]
+  ['uint64_0',['UINT64',['../namespacesimdjson_1_1dom.html#a6e1dee3a823ecfee91086d3478bbab3aa6de7acf711860176ba606e9aa2b85d5f',1,'simdjson::dom']]],
+  ['unclosed_5fstring_1',['UNCLOSED_STRING',['../namespacesimdjson.html#a7b735a3a50ba79e3f7f14df5f77d8da9a0f9ce97e85e7607e0f4d3811b818a013',1,'simdjson']]],
+  ['unescape_2',['unescape',['../classsimdjson_1_1_s_i_m_d_j_s_o_n___i_m_p_l_e_m_e_n_t_a_t_i_o_n_1_1ondemand_1_1parser.html#a27714b0095b036a169cabebdc1031937',1,'simdjson::SIMDJSON_IMPLEMENTATION::ondemand::parser']]],
+  ['unescape_5fwobbly_3',['unescape_wobbly',['../classsimdjson_1_1_s_i_m_d_j_s_o_n___i_m_p_l_e_m_e_n_t_a_t_i_o_n_1_1ondemand_1_1parser.html#a926e145e3ffb2b1024646dd56bc938e4',1,'simdjson::SIMDJSON_IMPLEMENTATION::ondemand::parser']]],
+  ['unescaped_5fchars_4',['UNESCAPED_CHARS',['../namespacesimdjson.html#a7b735a3a50ba79e3f7f14df5f77d8da9aca57917fc85c421aab3f2dd451519fa5',1,'simdjson']]],
+  ['unescaped_5fkey_5',['unescaped_key',['../classsimdjson_1_1_s_i_m_d_j_s_o_n___i_m_p_l_e_m_e_n_t_a_t_i_o_n_1_1ondemand_1_1field.html#a421d8339349ee4f2618231f6106d24fa',1,'simdjson::SIMDJSON_IMPLEMENTATION::ondemand::field::unescaped_key(bool allow_replacement=false) noexcept'],['../classsimdjson_1_1_s_i_m_d_j_s_o_n___i_m_p_l_e_m_e_n_t_a_t_i_o_n_1_1ondemand_1_1field.html#a2a86abd90e539324f097674fb66e1520',1,'simdjson::SIMDJSON_IMPLEMENTATION::ondemand::field::unescaped_key(string_type &amp;receiver, bool allow_replacement=false) noexcept']]],
+  ['unexpected_5ferror_6',['UNEXPECTED_ERROR',['../namespacesimdjson.html#a7b735a3a50ba79e3f7f14df5f77d8da9abdd3905c91a152a01637a2946066db6b',1,'simdjson']]],
+  ['unicode_7',['unicode',['../structsimdjson_1_1padded__string.html#autotoc_md146',1,'Windows and Unicode'],['../classsimdjson_1_1dom_1_1parser.html#autotoc_md116',1,'Windows and Unicode']]],
+  ['uninitialized_8',['UNINITIALIZED',['../namespacesimdjson.html#a7b735a3a50ba79e3f7f14df5f77d8da9ac2aef8f0fc33187cc118c95fade925d2',1,'simdjson']]],
+  ['unsafe_5fis_5fequal_9',['unsafe_is_equal',['../classsimdjson_1_1_s_i_m_d_j_s_o_n___i_m_p_l_e_m_e_n_t_a_t_i_o_n_1_1ondemand_1_1raw__json__string.html#affa14023a66c65f906ee3e673443d943',1,'simdjson::SIMDJSON_IMPLEMENTATION::ondemand::raw_json_string::unsafe_is_equal(size_t length, std::string_view target) const noexcept'],['../classsimdjson_1_1_s_i_m_d_j_s_o_n___i_m_p_l_e_m_e_n_t_a_t_i_o_n_1_1ondemand_1_1raw__json__string.html#a3d8f15d3b004acd695b6fff5ba94b515',1,'simdjson::SIMDJSON_IMPLEMENTATION::ondemand::raw_json_string::unsafe_is_equal(const char *target) const noexcept'],['../classsimdjson_1_1_s_i_m_d_j_s_o_n___i_m_p_l_e_m_e_n_t_a_t_i_o_n_1_1ondemand_1_1raw__json__string.html#a11bccba8ede5e7dff56e2737fcb853c7',1,'simdjson::SIMDJSON_IMPLEMENTATION::ondemand::raw_json_string::unsafe_is_equal(std::string_view target) const noexcept']]],
+  ['unsupported_5farchitecture_10',['UNSUPPORTED_ARCHITECTURE',['../namespacesimdjson.html#a7b735a3a50ba79e3f7f14df5f77d8da9a4d768ac107473bceb91f8a0d1a824bc2',1,'simdjson']]],
+  ['usage_20and_20downclocking_11',['Power Usage and Downclocking',['../md_doc_2performance.html#autotoc_md102',1,'']]],
+  ['use_12',['IMPORTANT: Validate what you use',['../classsimdjson_1_1_s_i_m_d_j_s_o_n___i_m_p_l_e_m_e_n_t_a_t_i_o_n_1_1ondemand_1_1parser.html#autotoc_md131',1,'']]],
+  ['use_20cases_13',['use cases',['../md_doc_2iterate__many.html#autotoc_md66',1,'Use cases'],['../md_doc_2parse__many.html#autotoc_md92',1,'Use cases']]],
+  ['use_20of_20the_20dom_20api_14',['Best Use of the DOM API',['../md_doc_2dom.html#autotoc_md49',1,'']]],
+  ['using_20simdjson_20as_20a_20cmake_20dependency_15',['Using simdjson as a CMake dependency',['../md_doc_2basics.html#autotoc_md3',1,'']]],
+  ['using_20simdjson_20with_20package_20managers_16',['Using simdjson with package managers',['../md_doc_2basics.html#autotoc_md2',1,'']]],
+  ['using_20the_20dom_20front_20end_17',['The Basics: Loading and Parsing JSON Documents using the DOM front-end',['../md_doc_2dom.html#autotoc_md37',1,'']]],
+  ['using_20the_20parsed_20json_18',['using the parsed json',['../md_doc_2basics.html#autotoc_md10',1,'Using the parsed JSON'],['../md_doc_2dom.html#autotoc_md38',1,'Using the Parsed JSON']]],
+  ['using_20the_20parsed_20json_3a_20additional_20examples_19',['Using the parsed JSON: additional examples',['../md_doc_2basics.html#autotoc_md11',1,'']]],
+  ['utf_208_20validation_20alone_20',['UTF-8 validation (alone)',['../md_doc_2basics.html#autotoc_md14',1,'']]],
+  ['utf8_5ferror_21',['UTF8_ERROR',['../namespacesimdjson.html#a7b735a3a50ba79e3f7f14df5f77d8da9a398a5389d6e20c39e8880b0101b66f56',1,'simdjson']]]
 ];

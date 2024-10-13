@@ -12,10 +12,5 @@ var classsimdjson_1_1_s_i_m_d_j_s_o_n___i_m_p_l_e_m_e_n_t_a_t_i_o_n_1_1ondemand_
     [ "is_empty", "classsimdjson_1_1_s_i_m_d_j_s_o_n___i_m_p_l_e_m_e_n_t_a_t_i_o_n_1_1ondemand_1_1array.html#a371cf8909f04019606063e8538fd7109", null ],
     [ "raw_json", "classsimdjson_1_1_s_i_m_d_j_s_o_n___i_m_p_l_e_m_e_n_t_a_t_i_o_n_1_1ondemand_1_1array.html#ad8a7f0b418fae60160e403f71a5a8088", null ],
     [ "reset", "classsimdjson_1_1_s_i_m_d_j_s_o_n___i_m_p_l_e_m_e_n_t_a_t_i_o_n_1_1ondemand_1_1array.html#ae7248918b09cb4cb1d866605c641679d", null ],
-    [ "array_iterator", "classsimdjson_1_1_s_i_m_d_j_s_o_n___i_m_p_l_e_m_e_n_t_a_t_i_o_n_1_1ondemand_1_1array.html#aec7be9f74f64c08fae57eaf36044f7a9", null ],
-    [ "document", "classsimdjson_1_1_s_i_m_d_j_s_o_n___i_m_p_l_e_m_e_n_t_a_t_i_o_n_1_1ondemand_1_1array.html#a7c20332b4481f29ace969e40cfce5f5f", null ],
-    [ "simdjson_result< array >", "classsimdjson_1_1_s_i_m_d_j_s_o_n___i_m_p_l_e_m_e_n_t_a_t_i_o_n_1_1ondemand_1_1array.html#ad294ba09879c3b42b87298bbc334439b", null ],
-    [ "simdjson_result< value >", "classsimdjson_1_1_s_i_m_d_j_s_o_n___i_m_p_l_e_m_e_n_t_a_t_i_o_n_1_1ondemand_1_1array.html#a9ad87deba0e08e8188b26485164889fb", null ],
-    [ "value", "classsimdjson_1_1_s_i_m_d_j_s_o_n___i_m_p_l_e_m_e_n_t_a_t_i_o_n_1_1ondemand_1_1array.html#ae5cda98fa74051d037c0c444c67efb15", null ],
     [ "iter", "classsimdjson_1_1_s_i_m_d_j_s_o_n___i_m_p_l_e_m_e_n_t_a_t_i_o_n_1_1ondemand_1_1array.html#a2d84851f9e4fc07b3e518ea957e2d9b6", null ]
 ];
